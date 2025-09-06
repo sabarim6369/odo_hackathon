@@ -5,7 +5,7 @@ const createProduct = async (req, res) => {
   try {
 let { title, description, price, categoryId,category, images, attributes, quantity } = req.body;
     const userId = req.userId;
-    console.log(categoryId);
+   
   categoryId=1
     quantity=10;
 

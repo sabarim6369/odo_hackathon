@@ -60,6 +60,14 @@ const onSubmit = async (data) => {
         location: manualLocation
       })
     };
+    const token=localStorage.getItem("token");
+     const response = await axios.post("http://localhost:5000/products", payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+
+      },
+    });
 
     // Now just use payload directly
     addProduct(payload);
