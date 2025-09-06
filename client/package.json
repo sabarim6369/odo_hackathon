@@ -12,6 +12,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@tailwindcss/vite": "^4.1.13",
+    "axios": "^1.11.0",
     "cloudinary-core": "^2.14.0",
     "cloudy-upload": "^1.0.8",
     "dexie": "^4.2.0",

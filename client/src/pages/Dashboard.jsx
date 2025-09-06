@@ -96,7 +96,7 @@ const Dashboard = () => {
               <div className="relative">
                 <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">
-                    {user.username.charAt(0).toUpperCase()}
+                    {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <button className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md border hover:bg-gray-50 transition-colors">
