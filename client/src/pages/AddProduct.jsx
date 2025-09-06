@@ -8,6 +8,7 @@ import { uploadMultipleImagesToCloudinary } from '../utils/cloudinary';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
+import axios from 'axios';
 
 const AddProduct = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
