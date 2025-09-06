@@ -193,271 +193,231 @@ const onSubmit = async (data) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+      
       {/* Header */}
-      <div className="mb-8">
+      <div className="px-6 py-6 border-b bg-gradient-to-r from-green-50 to-white">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mb-4"
+          className="flex items-center text-gray-600 hover:text-green-700 transition-colors mb-3"
         >
-          <ArrowLeft size={20} className="mr-2" />
+          <ArrowLeft size={18} className="mr-2" />
           Back to Home
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Sell New Product</h1>
-        <p className="text-gray-600">
-          List your pre-owned item and contribute to sustainable living
+        <h1 className="text-3xl font-bold text-gray-900">Sell New Product</h1>
+        <p className="text-gray-500 mt-1">
+          List your pre-owned item and contribute to sustainable living 🌱
         </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Multiple Product Images Section */}
+      <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
+        
+        {/* Image Upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Product Images *
+          <label className="block text-sm font-semibold text-gray-800 mb-3">
+            Product Images <span className="text-red-500">*</span>
           </label>
-          
-          {/* Image Upload Area */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-green-400 transition-colors">
-            {/* Main Upload Button */}
-            <div className="text-center">
-              <div className="mx-auto h-16 w-16 text-gray-400 mb-4">
-                <ImagePlus size={64} />
-              </div>
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <span className="mt-2 block text-sm font-medium text-gray-900">
-                  Upload product images
-                </span>
-                <span className="mt-1 block text-sm text-gray-500">
-                  Select multiple images (PNG, JPG, JPEG up to 10MB each)
-                </span>
-              </label>
-              
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                disabled={imageUploading}
-                className="hidden"
-              />
-              
-              <button
-                type="button"
-                onClick={() => document.getElementById('image-upload').click()}
-                disabled={imageUploading}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {imageUploading ? (
-                  <>
-                    <RefreshCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="-ml-1 mr-2 h-4 w-4" />
-                    Choose Images
-                  </>
-                )}
-              </button>
+
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 transition cursor-pointer">
+            <div className="mx-auto h-16 w-16 text-gray-400 mb-4">
+              <ImagePlus size={64} />
             </div>
+            <p className="text-gray-700 font-medium">Upload product images</p>
+            <p className="text-sm text-gray-500">
+              Select multiple images (PNG, JPG, JPEG up to 10MB each)
+            </p>
+
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              disabled={imageUploading}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => document.getElementById('image-upload').click()}
+              disabled={imageUploading}
+              className="mt-4 inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 transition disabled:opacity-50"
+            >
+              {imageUploading ? (
+                <>
+                  <RefreshCw className="animate-spin mr-2 h-4 w-4" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Choose Images
+                </>
+              )}
+            </button>
           </div>
 
           {/* Upload Progress */}
           {imageUploading && uploadProgress.total > 0 && (
             <div className="mt-4">
               <div className="flex justify-between text-sm text-gray-600 mb-1">
-                <span>Uploading images to Cloudinary...</span>
-                <span>{uploadProgress.current}/{uploadProgress.total}</span>
+                <span>Uploading images...</span>
+                <span>
+                  {uploadProgress.current}/{uploadProgress.total}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all"
                   style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
-                ></div>
+                />
               </div>
             </div>
           )}
 
-          {/* Image Previews Grid */}
+          {/* Image Previews */}
           {imagePreviews.length > 0 && (
             <div className="mt-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-semibold text-gray-800">
                   Selected Images ({imagePreviews.length})
                 </h3>
                 <button
                   type="button"
                   onClick={handleRemoveAllImages}
-                  className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                  className="text-sm text-red-600 hover:text-red-800 transition"
                 >
                   Remove All
                 </button>
               </div>
-              
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
-                      <img
-                        src={preview}
-                        alt={`Product preview ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    {/* Remove Button */}
+                  <div key={index} className="relative group rounded-xl overflow-hidden shadow-md border border-gray-200">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                    />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow-md"
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                       title="Remove image"
                     >
                       <X size={14} />
                     </button>
-                    
-                    {/* Upload Status Indicator */}
-                    {imageUploading && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <RefreshCw className="animate-spin h-5 w-5 text-white" />
+                    {cloudinaryUrls[index] && (
+                      <div className="absolute bottom-2 left-2 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircle size={14} />
                       </div>
                     )}
-                    
-                    {cloudinaryUrls[index] && !imageUploading && (
-                      <div className="absolute bottom-2 left-2 bg-green-500 text-white rounded-full p-1" title="Uploaded successfully">
-                        <CheckCircle size={16} />
-                      </div>
-                    )}
-                    
-                    {/* Image Number Badge */}
-                    <div className="absolute top-2 left-2 bg-gray-800 bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                      {index + 1}
-                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Upload Status Messages */}
+          {/* Status Messages */}
           {cloudinaryUrls.length > 0 && !imageUploading && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-600 flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {cloudinaryUrls.length} image(s) uploaded successfully to Cloudinary
-              </p>
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {cloudinaryUrls.length} image(s) uploaded successfully
             </div>
           )}
-          
           {imageUploadError && !imageUploading && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600 flex items-center">
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {imageUploadError}
-              </p>
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              {imageUploadError}
             </div>
           )}
         </div>
 
-        {/* Product Title */}
+        {/* Title */}
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-            Product Title *
+          <label htmlFor="title" className="block text-sm font-semibold text-gray-800 mb-2">
+            Product Title <span className="text-red-500">*</span>
           </label>
           <input
             {...register('title')}
-            type="text"
             id="title"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            type="text"
             placeholder="Enter product title"
+            className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-          )}
+          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
         </div>
 
         {/* Price */}
         <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-            Price (₹) *
+          <label htmlFor="price" className="block text-sm font-semibold text-gray-800 mb-2">
+            Price (₹) <span className="text-red-500">*</span>
           </label>
           <input
             {...register('price')}
-            type="number"
             id="price"
+            type="number"
             min="0"
             step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
             placeholder="Enter price"
+            className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
-          )}
+          {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>}
         </div>
 
         {/* Category */}
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-            Category *
+          <label htmlFor="category" className="block text-sm font-semibold text-gray-800 mb-2">
+            Category <span className="text-red-500">*</span>
           </label>
           <select
             {...register('categoryId')}
             id="category"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
               </option>
             ))}
           </select>
-          {errors.category && (
-            <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
-          )}
+          {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
         </div>
 
         {/* Description */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-            Description *
+          <label htmlFor="description" className="block text-sm font-semibold text-gray-800 mb-2">
+            Description <span className="text-red-500">*</span>
           </label>
           <textarea
             {...register('description')}
             id="description"
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
             placeholder="Describe your product in detail..."
+            className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-          )}
+          {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
         </div>
 
-        {/* Location Section */}
+        {/* Location */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Location
-          </label>
-          
-          {/* Location Toggle */}
+          <label className="block text-sm font-semibold text-gray-800 mb-3">Location</label>
           <div className="flex space-x-4 mb-4">
             <button
               type="button"
               onClick={() => handleLocationToggle(true)}
-              className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
+              disabled={isLoading}
+              className={`flex items-center px-4 py-2 rounded-lg border transition ${
                 useCurrentLocation
                   ? 'bg-green-50 border-green-300 text-green-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
-              disabled={isLoading}
             >
               <MapPin size={16} className="mr-2" />
               {isLoading ? (
                 <>
-                  <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                  Getting location...
+                  <RefreshCw className="animate-spin h-4 w-4 mr-2" /> Getting location...
                 </>
               ) : (
                 'Use Current Location'
@@ -466,7 +426,7 @@ const onSubmit = async (data) => {
             <button
               type="button"
               onClick={() => handleLocationToggle(false)}
-              className={`px-4 py-2 rounded-md border transition-colors ${
+              className={`px-4 py-2 rounded-lg border transition ${
                 !useCurrentLocation
                   ? 'bg-green-50 border-green-300 text-green-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -476,75 +436,63 @@ const onSubmit = async (data) => {
             </button>
           </div>
 
-          {/* Current Location Display */}
           {useCurrentLocation && location && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-start">
-                <MapPin className="h-5 w-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-green-800">Current Location</p>
-                  <p className="text-sm text-green-600">
-                    {location.address?.formatted || `${location.latitude}, ${location.longitude}`}
-                  </p>
-                </div>
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 flex items-start">
+              <MapPin className="h-5 w-5 mr-2 text-green-600" />
+              <div>
+                <p className="font-medium">Current Location</p>
+                <p>{location.address?.formatted || `${location.latitude}, ${location.longitude}`}</p>
               </div>
             </div>
           )}
 
-          {/* Manual Location Input */}
           {!useCurrentLocation && (
-            <div>
-              <input
-                type="text"
-                value={manualLocation}
-                onChange={(e) => setManualLocation(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your location (e.g., City, State)"
-              />
-            </div>
+            <input
+              type="text"
+              value={manualLocation}
+              onChange={(e) => setManualLocation(e.target.value)}
+              placeholder="Enter your location (e.g., City, State)"
+              className="w-full px-4 py-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
           )}
 
-          {/* Get Current Location Button */}
           {useCurrentLocation && !location && (
             <button
               type="button"
               onClick={handleGetCurrentLocation}
               disabled={isLoading}
-              className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-2 flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
             >
               {isLoading ? (
                 <>
-                  <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                  Getting location...
+                  <RefreshCw className="animate-spin h-4 w-4 mr-2" /> Getting location...
                 </>
               ) : (
                 <>
-                  <MapPin size={16} className="mr-2" />
-                  Get Current Location
+                  <MapPin size={16} className="mr-2" /> Get Current Location
                 </>
               )}
             </button>
           )}
         </div>
 
-        {/* Submit Button */}
+        {/* Actions */}
         <div className="flex space-x-4 pt-4">
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            className="flex-1 px-5 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting || imageUploading || cloudinaryUrls.length === 0}
-            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="flex-1 px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center disabled:opacity-50"
           >
             {imageUploading ? (
               <>
-                <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-                Uploading Images...
+                <RefreshCw className="animate-spin h-4 w-4 mr-2" /> Uploading...
               </>
             ) : isSubmitting ? (
               'Listing Product...'
@@ -555,7 +503,9 @@ const onSubmit = async (data) => {
         </div>
       </form>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default AddProduct;

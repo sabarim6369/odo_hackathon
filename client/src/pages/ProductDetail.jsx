@@ -9,6 +9,7 @@ import usePurchaseStore from '../stores/purchaseStore';
 import useWishlistStore from '../stores/wishlistStore';
 import useToast from '../hooks/useToast';
 import ProductCard from '../components/ProductCard';
+import { Loader2 } from "lucide-react"; // Spinner icon
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -18,6 +19,8 @@ const ProductDetail = () => {
   const { addPurchase } = usePurchaseStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
   const { success, error, warning } = useToast();
+  const [buying, setBuying] = useState(false);
+
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,20 +107,48 @@ useEffect(() => {
     }
   };
 
-  const handleBuyNow = () => {
-    if (!user.isLoggedIn) {
-      warning('Login Required', 'Please login to make a purchase.');
-      navigate('/login', { state: { from: window.location.pathname } });
-      return;
-    }
-    try {
-      addPurchase([product]);
-      success('Purchase Successful!', 'Your order has been placed. Check your purchase history.');
-      navigate('/purchases');
-    } catch {
-      error('Purchase Failed', 'Could not complete your purchase. Please try again.');
-    }
-  };
+  // const handleBuyNow = () => {
+  //   if (!user.isLoggedIn) {
+  //     warning('Login Required', 'Please login to make a purchase.');
+  //     navigate('/login', { state: { from: window.location.pathname } });
+  //     return;
+  //   }
+  //   try {
+  //     addPurchase([product]);
+  //     success('Purchase Successful!', 'Your order has been placed. Check your purchase history.');
+  //     navigate('/purchases');
+  //   } catch {
+  //     error('Purchase Failed', 'Could not complete your purchase. Please try again.');
+  //   }
+  // };
+const handleBuyNow = async () => {
+  if (!user.isLoggedIn) {
+    warning('Login Required', 'Please login to make a purchase.');
+    navigate('/login', { state: { from: window.location.pathname } });
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  try {
+    setBuying(true);
+    await axios.post(
+      "http://localhost:5000/purchases/checkout",
+      { productId: product.id },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    success('Purchase Successful!', 'Your order has been placed. Check your purchase history.');
+    navigate('/purchases');
+  } catch (err) {
+    console.error('Checkout failed:', err);
+    error(
+      'Purchase Failed',
+      err.response?.data?.error || 'Could not complete your purchase. Please try again.'
+    );
+  } finally {
+    setBuying(false);
+  }
+};
 
   const handleWishlistToggle = () => {
     if (!user.isLoggedIn) {
@@ -156,7 +187,7 @@ useEffect(() => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back Button */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
       >
         <ArrowLeft size={20} />
@@ -183,8 +214,8 @@ useEffect(() => {
                   onClick={() => setSelectedImageIndex(index)}
                   className={`w-full h-24 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
                     selectedImageIndex === index
-                      ? 'border-green-500'
-                      : 'border-transparent hover:border-green-300'
+                      ? "border-green-500"
+                      : "border-transparent hover:border-green-300"
                   }`}
                 >
                   <img
@@ -213,17 +244,27 @@ useEffect(() => {
           </div>
 
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
-            <div className="text-3xl font-bold text-green-600">{formatPrice(product.price)}</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {product.title}
+            </h1>
+            <div className="text-3xl font-bold text-green-600">
+              {formatPrice(product.price)}
+            </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Description
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {product.description}
+            </p>
           </div>
 
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Product Details
+            </h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Condition</dt>
@@ -239,7 +280,9 @@ useEffect(() => {
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Location</dt>
-                <dd className="text-sm text-gray-900">Local Pickup Available</dd>
+                <dd className="text-sm text-gray-900">
+                  Local Pickup Available
+                </dd>
               </div>
             </dl>
           </div>
@@ -257,9 +300,17 @@ useEffect(() => {
 
               <button
                 onClick={handleBuyNow}
-                className="flex-1 bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                disabled={buying}
+                className="flex-1 flex items-center justify-center bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Buy Now
+                {buying ? (
+                  <>
+                    <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                    Buying in progress...
+                  </>
+                ) : (
+                  "Buy Now"
+                )}
               </button>
             </div>
 
@@ -267,11 +318,20 @@ useEffect(() => {
               <button
                 onClick={handleWishlistToggle}
                 className={`flex items-center space-x-2 transition-colors ${
-                  isProductInWishlist ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
+                  isProductInWishlist
+                    ? "text-red-500 hover:text-red-600"
+                    : "text-gray-600 hover:text-red-500"
                 }`}
               >
-                <Heart size={20} fill={isProductInWishlist ? 'currentColor' : 'none'} />
-                <span>{isProductInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
+                <Heart
+                  size={20}
+                  fill={isProductInWishlist ? "currentColor" : "none"}
+                />
+                <span>
+                  {isProductInWishlist
+                    ? "Remove from Wishlist"
+                    : "Add to Wishlist"}
+                </span>
               </button>
 
               <button
@@ -289,8 +349,9 @@ useEffect(() => {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-semibold text-blue-900 mb-2">Safety First</h4>
               <p className="text-sm text-blue-800">
-                Always meet in a public place for transactions. Inspect items carefully before purchase. 
-                EcoFinds promotes safe and sustainable trading practices.
+                Always meet in a public place for transactions. Inspect items
+                carefully before purchase. EcoFinds promotes safe and
+                sustainable trading practices.
               </p>
             </div>
           </div>
@@ -298,29 +359,29 @@ useEffect(() => {
       </div>
 
       {/* Related Products Section */}
-     {/* Related Products Section */}
-{/* Related Products Section */}
-<div className="mt-16">
-  <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
+      {/* Related Products Section */}
+      {/* Related Products Section */}
+      <div className="mt-16">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          You might also like
+        </h2>
 
-  {relatedProducts.length > 0 ? (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {relatedProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          showActions={false}   // hide edit/delete for related items
-        />
-      ))}
-    </div>
-  ) : (
-    <div className="text-center py-8 text-gray-500">
-      <p>No related products found.</p>
-    </div>
-  )}
-</div>
-
-
+        {relatedProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showActions={false} // hide edit/delete for related items
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p>No related products found.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
