@@ -3,11 +3,15 @@ import { ShoppingCart, Heart, Edit, Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/helpers';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
+import useWishlistStore from '../stores/wishlistStore';
 
 const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
   const navigate = useNavigate();
+
+  const isWishlisted = isInWishlist(product.id);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -19,6 +23,18 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
     }
     
     addToCart(product);
+  };
+
+  const handleWishlistToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user.isLoggedIn) {
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
+    
+    toggleWishlist(product);
   };
 
   const handleEdit = (e) => {
@@ -44,8 +60,19 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute top-2 right-2">
-            <button className="p-2 bg-white/80 rounded-full hover:bg-white transition-colors">
-              <Heart size={16} className="text-gray-600" />
+            <button 
+              onClick={handleWishlistToggle}
+              className={`p-2 rounded-full transition-colors ${
+                isWishlisted 
+                  ? 'bg-red-500 text-white hover:bg-red-600' 
+                  : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+              }`}
+              title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart 
+                size={16} 
+                className={isWishlisted ? 'fill-current' : ''} 
+              />
             </button>
           </div>
         </div>

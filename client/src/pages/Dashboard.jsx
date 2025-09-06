@@ -11,7 +11,8 @@ import {
   Save,
   Camera,
   Eye,
-  Calendar
+  Calendar,
+  Heart
 } from 'lucide-react';
 import { profileSchema } from '../utils/validation';
 import { formatPrice, formatDate } from '../utils/helpers';
@@ -19,6 +20,7 @@ import useUserStore from '../stores/userStore';
 import useProductStore from '../stores/productStore';
 import useCartStore from '../stores/cartStore';
 import usePurchaseStore from '../stores/purchaseStore';
+import useWishlistStore from '../stores/wishlistStore';
 
 const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +28,7 @@ const Dashboard = () => {
   const { getUserProducts } = useProductStore();
   const { getCartItemsCount } = useCartStore();
   const { getPurchases } = usePurchaseStore();
+  const { wishlistItems } = useWishlistStore();
 
   const userProducts = getUserProducts(user.id);
   const cartItemsCount = getCartItemsCount();
@@ -59,7 +62,6 @@ const Dashboard = () => {
     setIsEditing(false);
   };
 
-  const totalProductValue = userProducts.reduce((sum, product) => sum + product.price, 0);
   const totalPurchases = purchases.reduce((sum, purchase) => sum + purchase.price, 0);
 
   return (
@@ -185,19 +187,17 @@ const Dashboard = () => {
 
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
-                <DollarSign className="h-8 w-8 text-purple-500" />
+                <Heart className="h-8 w-8 text-red-500" />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-500">Listing Value</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatPrice(totalProductValue)}
-                  </p>
+                  <p className="text-sm font-medium text-gray-500">Wishlist</p>
+                  <p className="text-2xl font-semibold text-gray-900">{wishlistItems.length}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
-                <Eye className="h-8 w-8 text-orange-500" />
+                <DollarSign className="h-8 w-8 text-purple-500" />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Total Spent</p>
                   <p className="text-2xl font-semibold text-gray-900">
@@ -237,19 +237,19 @@ const Dashboard = () => {
               </Link>
 
               <Link
+                to="/wishlist"
+                className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Heart className="h-8 w-8 text-gray-400 mb-2" />
+                <span className="text-sm font-medium text-gray-700">My Wishlist</span>
+              </Link>
+
+              <Link
                 to="/purchases"
                 className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors"
               >
                 <Calendar className="h-8 w-8 text-gray-400 mb-2" />
                 <span className="text-sm font-medium text-gray-700">Purchase History</span>
-              </Link>
-
-              <Link
-                to="/payment-history"
-                className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-red-500 hover:bg-red-50 transition-colors"
-              >
-                <DollarSign className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm font-medium text-gray-700">Payment History</span>
               </Link>
             </div>
           </div>

@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Plus, LogOut, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Plus, LogOut, Menu, X, Heart } from 'lucide-react';
 import { useState } from 'react';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
+import useWishlistStore from '../stores/wishlistStore';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
   const { getCartItemsCount } = useCartStore();
+  const { getWishlistCount } = useWishlistStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -26,6 +28,7 @@ const Header = () => {
   };
 
   const cartItemsCount = getCartItemsCount();
+  const wishlistCount = getWishlistCount();
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -70,17 +73,33 @@ const Header = () => {
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center space-x-4">
             {user.isLoggedIn && (
-              <Link 
-                to="/cart" 
-                className="relative p-2 text-gray-700 hover:text-green-600 transition-colors"
-              >
-                <ShoppingCart size={24} />
-                {cartItemsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemsCount}
-                  </span>
-                )}
-              </Link>
+              <>
+                <Link 
+                  to="/wishlist" 
+                  className="relative p-2 text-gray-700 hover:text-red-500 transition-colors"
+                  title="Wishlist"
+                >
+                  <Heart size={24} />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+                
+                <Link 
+                  to="/cart" 
+                  className="relative p-2 text-gray-700 hover:text-green-600 transition-colors"
+                  title="Shopping Cart"
+                >
+                  <ShoppingCart size={24} />
+                  {cartItemsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemsCount}
+                    </span>
+                  )}
+                </Link>
+              </>
             )}
             
             <button
@@ -138,6 +157,14 @@ const Header = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     My Listings
+                  </Link>
+                  <Link 
+                    to="/wishlist" 
+                    className="flex items-center space-x-2 text-gray-700 hover:text-red-500 transition-colors px-2 py-1"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Heart size={16} />
+                    <span>Wishlist ({wishlistCount})</span>
                   </Link>
                   <Link 
                     to="/cart" 
