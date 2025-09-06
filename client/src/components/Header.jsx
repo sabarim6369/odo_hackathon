@@ -1,15 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Plus, LogOut, Menu, X, Heart } from 'lucide-react';
+import { ShoppingCart, User, Plus, LogOut, Menu, X, Heart, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
 import useWishlistStore from '../stores/wishlistStore';
+import useLocationStore from '../stores/locationStore';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useUserStore();
   const { getCartItemsCount } = useCartStore();
   const { getWishlistCount } = useWishlistStore();
+  const { location } = useLocationStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -45,6 +47,16 @@ const Header = () => {
             </div>
             <span className="text-xl font-bold text-gray-900">EcoFinds</span>
           </Link>
+
+          {/* Location Indicator */}
+          {location && (
+            <div className="hidden md:flex items-center space-x-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+              <MapPin size={14} />
+              <span className="truncate max-w-32">
+                {location.address?.city || 'Current Location'}
+              </span>
+            </div>
+          )}
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">

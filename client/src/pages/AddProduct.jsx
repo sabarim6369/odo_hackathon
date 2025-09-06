@@ -2,15 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Upload, ArrowLeft } from 'lucide-react';
+import { Upload, ArrowLeft, MapPin, RefreshCw } from 'lucide-react';
 import { productSchema, categories } from '../utils/validation';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
+import useLocationStore from '../stores/locationStore';
 
 const AddProduct = () => {
   const [imagePreview, setImagePreview] = useState(null);
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+  const [manualLocation, setManualLocation] = useState('');
+  
   const { addProduct } = useProductStore();
   const { user } = useUserStore();
+  const { location, isLoading, getCurrentLocation } = useLocationStore();
   const navigate = useNavigate();
 
   const {
@@ -29,7 +34,16 @@ const AddProduct = () => {
       ...data,
       price: parseFloat(data.price),
       userId: user.id,
-      image: imagePreview || `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`
+      image: imagePreview || `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
+      // Add location data if available
+      ...(useCurrentLocation && location && {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        location: location.address?.formatted || 'Current Location'
+      }),
+      ...(manualLocation && !useCurrentLocation && {
+        location: manualLocation
+      })
     };
     
     addProduct(newProduct);
@@ -46,6 +60,23 @@ const AddProduct = () => {
         setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGetCurrentLocation = async () => {
+    try {
+      await getCurrentLocation();
+      setUseCurrentLocation(true);
+      setManualLocation('');
+    } catch (error) {
+      console.error('Failed to get location:', error);
+    }
+  };
+
+  const handleLocationToggle = (useLocation) => {
+    setUseCurrentLocation(useLocation);
+    if (useLocation) {
+      setManualLocation('');
     }
   };
 
@@ -165,6 +196,79 @@ const AddProduct = () => {
           {errors.price && (
             <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
           )}
+        </div>
+
+        {/* Location */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Location (Optional)
+          </label>
+          
+          <div className="space-y-3">
+            {/* Current Location Option */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="currentLocation"
+                name="locationOption"
+                checked={useCurrentLocation}
+                onChange={() => handleLocationToggle(true)}
+                className="text-green-500 focus:ring-green-500"
+              />
+              <label htmlFor="currentLocation" className="text-sm text-gray-700 flex items-center space-x-2">
+                <MapPin size={16} />
+                <span>Use Current Location</span>
+              </label>
+              {!useCurrentLocation && (
+                <button
+                  type="button"
+                  onClick={handleGetCurrentLocation}
+                  disabled={isLoading}
+                  className="text-xs text-green-600 hover:text-green-700 underline flex items-center space-x-1"
+                >
+                  <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>{isLoading ? 'Getting...' : 'Get Location'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Show current location if available */}
+            {useCurrentLocation && location && (
+              <div className="ml-6 text-sm text-gray-600 bg-green-50 p-2 rounded">
+                📍 {location.address?.formatted || 'Current Location'}
+              </div>
+            )}
+
+            {/* Manual Location Option */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="manualLocation"
+                name="locationOption"
+                checked={!useCurrentLocation}
+                onChange={() => handleLocationToggle(false)}
+                className="text-green-500 focus:ring-green-500"
+              />
+              <label htmlFor="manualLocation" className="text-sm text-gray-700">
+                Enter Location Manually
+              </label>
+            </div>
+
+            {/* Manual Location Input */}
+            {!useCurrentLocation && (
+              <input
+                type="text"
+                value={manualLocation}
+                onChange={(e) => setManualLocation(e.target.value)}
+                placeholder="e.g., Mumbai, Maharashtra"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            )}
+          </div>
+          
+          <p className="mt-1 text-xs text-gray-500">
+            Adding location helps buyers find products near them
+          </p>
         </div>
 
         {/* Description */}
