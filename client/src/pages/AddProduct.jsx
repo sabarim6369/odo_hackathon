@@ -184,7 +184,7 @@ const onSubmit = async (data) => {
           <ArrowLeft size={20} className="mr-2" />
           Back to Home
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Sell New Product</h1>
         <p className="text-gray-600">
           List your pre-owned item and contribute to sustainable living
         </p>
@@ -529,9 +529,9 @@ const onSubmit = async (data) => {
                 Uploading Images...
               </>
             ) : isSubmitting ? (
-              'Adding Product...'
+              'Listing Product...'
             ) : (
-              'Add Product'
+              'Sell Product'
             )}
           </button>
         </div>
