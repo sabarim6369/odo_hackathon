@@ -1,17 +1,24 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, Edit, Trash2 } from 'lucide-react';
+import { ShoppingCart, Heart, Edit, Trash2, MapPin } from 'lucide-react';
 import { formatPrice } from '../utils/helpers';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
 import useWishlistStore from '../stores/wishlistStore';
+import useLocationStore from '../stores/locationStore';
 
 const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
   const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const { location, getDistanceToLocation } = useLocationStore();
   const navigate = useNavigate();
 
   const isWishlisted = isInWishlist(product.id);
+
+  // Calculate distance if both user location and product location are available
+  const distance = location && product.latitude && product.longitude 
+    ? getDistanceToLocation(product.latitude, product.longitude)
+    : null;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -79,10 +86,16 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
 
         {/* Product Info */}
         <div className="p-4">
-          <div className="mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
               {product.category}
             </span>
+            {distance && (
+              <div className="flex items-center space-x-1 text-xs text-gray-500">
+                <MapPin size={12} />
+                <span>{distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away</span>
+              </div>
+            )}
           </div>
           
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">

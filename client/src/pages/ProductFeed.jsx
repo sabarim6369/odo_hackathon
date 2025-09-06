@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import LocationPrompt from '../components/LocationPrompt';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
+import useLocationStore from '../stores/locationStore';
 
 const ProductFeed = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
   const { 
     getFilteredProducts, 
@@ -19,6 +22,7 @@ const ProductFeed = () => {
   } = useProductStore();
   
   const { user } = useUserStore();
+  const { location, permissionStatus, refreshLocationIfStale } = useLocationStore();
   const navigate = useNavigate();
 
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
@@ -33,6 +37,25 @@ const ProductFeed = () => {
 
     return () => clearTimeout(timer);
   }, [localSearchQuery, setSearchQuery]);
+
+  // Location detection
+  useEffect(() => {
+    const checkLocationStatus = async () => {
+      // Show location prompt if no location and permission not denied
+      if (!location && permissionStatus !== 'denied') {
+        setShowLocationPrompt(true);
+      } else if (location) {
+        // Refresh location if stale
+        try {
+          await refreshLocationIfStale();
+        } catch (error) {
+          console.log('Location refresh failed:', error);
+        }
+      }
+    };
+
+    checkLocationStatus();
+  }, [location, permissionStatus, refreshLocationIfStale]);
 
   const handleAddProduct = () => {
     if (!user.isLoggedIn) {
@@ -58,6 +81,11 @@ const ProductFeed = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Location Prompt */}
+      {showLocationPrompt && (
+        <LocationPrompt onClose={() => setShowLocationPrompt(false)} />
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
