@@ -1,17 +1,36 @@
 const prisma = require('../prisma/client/prismaClient');
-const sendEmailToQueue = require('../utils/sendEmailToQueue'); // adjust path
+const sendEmailToQueue = require('../Services/EmailService'); // adjust path
 
 const checkout = async (req, res) => {
   try {
     const userId = req.userId;
+    const { productId } = req.body; // <-- optional single product purchase
 
-    // Get cart items with product info
-    const cartItems = await prisma.cart.findMany({
-      where: { userId },
-      include: { product: { include: { images: true, owner: true } } }
-    });
+    let cartItems;
 
-    if (cartItems.length === 0) return res.json({ message: "Cart is empty" });
+    if (productId) {
+      // Purchase a specific product
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        include: { images: true, owner: true }
+      });
+
+      if (!product) return res.status(404).json({ message: "Product not found" });
+
+      cartItems = [{
+        product,
+        productId: product.id,
+        quantity: 1 // default quantity 1 if direct purchase
+      }];
+    } else {
+      // Purchase everything in the cart
+      cartItems = await prisma.cart.findMany({
+        where: { userId },
+        include: { product: { include: { images: true, owner: true } } }
+      });
+
+      if (cartItems.length === 0) return res.json({ message: "Cart is empty" });
+    }
 
     // Create purchases in a transaction
     const purchases = await prisma.$transaction(
@@ -20,8 +39,10 @@ const checkout = async (req, res) => {
       )
     );
 
-    // Clear the cart
-    await prisma.cart.deleteMany({ where: { userId } });
+    // If cart purchase, clear the cart
+    if (!productId) {
+      await prisma.cart.deleteMany({ where: { userId } });
+    }
 
     // Prepare email data
     const buyer = await prisma.user.findUnique({ where: { id: userId } });
@@ -39,7 +60,7 @@ const checkout = async (req, res) => {
     const emailData = {
       buyerEmail: buyer.email,
       buyerName: buyer.name,
-      ownerEmail: cartItems[0].product.owner.email, // assume same owner for simplicity
+      ownerEmail: cartItems[0].product.owner.email, // assume same owner
       ownerName: cartItems[0].product.owner.name,
       items: itemsForEmail,
       totalPrice
