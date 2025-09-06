@@ -5,6 +5,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const cors= require('cors');
+// const flush=require("./Redis/Flush")
 require('dotenv').config();
 const app = express();
 app.use(express.json());

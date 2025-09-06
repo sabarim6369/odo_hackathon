@@ -48,6 +48,10 @@ const Signup = () => {
 
     // Update store
     login(userData);
+    const { token } = result;
+
+    localStorage.setItem("token", token);
+
 
     // ✅ Show success toast
     success("Signup Successful", "Your account has been created successfully!");
