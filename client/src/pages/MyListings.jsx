@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import { formatPrice } from '../utils/helpers';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 
@@ -75,12 +76,12 @@ const MyListings = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">$</span>
+              <span className="text-blue-600 font-semibold">₹</span>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Total Value</p>
               <p className="text-2xl font-semibold text-gray-900">
-                ${userProducts.reduce((sum, product) => sum + product.price, 0).toFixed(2)}
+                {formatPrice(userProducts.reduce((sum, product) => sum + product.price, 0))}
               </p>
             </div>
           </div>

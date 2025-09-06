@@ -5,7 +5,7 @@ const mockProducts = [
   {
     id: 1,
     title: "Vintage Leather Jacket",
-    price: 85,
+    price: 7055,
     category: "Clothing",
     description:
       "A beautiful vintage leather jacket in excellent condition. Perfect for casual outings.",
@@ -16,7 +16,7 @@ const mockProducts = [
   {
     id: 2,
     title: "MacBook Pro 2019",
-    price: 1200,
+    price: 99600,
     category: "Electronics",
     description:
       "MacBook Pro 13-inch from 2019, great for work and creative projects. Minor wear on corners.",
@@ -26,7 +26,7 @@ const mockProducts = [
   {
     id: 3,
     title: "Wooden Coffee Table",
-    price: 150,
+    price: 12450,
     category: "Furniture",
     description:
       "Handcrafted wooden coffee table with unique grain patterns. Perfect for modern homes.",
@@ -37,7 +37,7 @@ const mockProducts = [
   {
     id: 4,
     title: "Canon DSLR Camera",
-    price: 450,
+    price: 37350,
     category: "Electronics",
     description:
       "Canon EOS Rebel T7i with kit lens. Great for photography enthusiasts.",
@@ -48,7 +48,7 @@ const mockProducts = [
   {
     id: 5,
     title: "Designer Handbag",
-    price: 200,
+    price: 16600,
     category: "Clothing",
     description:
       "Authentic designer handbag in mint condition. Comes with original packaging.",
