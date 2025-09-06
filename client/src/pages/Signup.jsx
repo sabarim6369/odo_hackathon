@@ -5,12 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
 import { signupSchema } from '../utils/validation';
 import useUserStore from '../stores/userStore';
+import axios from 'axios';
+import useToast from '../hooks/useToast';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login } = useUserStore();
   const navigate = useNavigate();
+    const { success, error } = useToast();
 
   const {
     register,
@@ -20,19 +23,48 @@ const Signup = () => {
     resolver: zodResolver(signupSchema)
   });
 
-  const onSubmit = async (data) => {
-    // Mock signup - in real app, this would call an API
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    
-    const userData = {
-      id: Date.now(),
-      username: data.username,
-      email: data.email
+  // onSubmit is now inside the component and can use hooks
+ const onSubmit = async (data) => {
+  try {
+    const payload = {
+      name: data.username, // map username to name
+      email: data.email,
+      password: data.password,
     };
-    
+
+    const response = await axios.post("http://localhost:5000/auth/register", payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = response.data;
+
+    const userData = {
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+    };
+
+    // Update store
     login(userData);
-    navigate('/dashboard', { replace: true });
-  };
+
+    // ✅ Show success toast
+    success("Signup Successful", "Your account has been created successfully!");
+
+    // Navigate to dashboard
+    navigate("/dashboard", { replace: true });
+  } catch (err) {
+    console.error("Registration failed:", err.response?.data || err.message);
+
+    // ❌ Show error toast
+    error(
+      "Signup Failed",
+      err.response?.data?.message || "Something went wrong. Please try again."
+    );
+  }
+};
+
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -60,47 +92,34 @@ const Signup = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
               <input
                 {...register('username')}
                 type="text"
-                autoComplete="username"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                 placeholder="Choose a username"
               />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
-              )}
+              {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Email address</label>
               <input
                 {...register('email')}
                 type="email"
-                autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                 placeholder="Enter your email"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Password</label>
               <div className="mt-1 relative">
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="block w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="Create a password"
                 />
                 <button
@@ -108,28 +127,19 @@ const Signup = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
               <div className="mt-1 relative">
                 <input
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="block w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="Confirm your password"
                 />
                 <button
@@ -137,48 +147,33 @@ const Signup = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-              )}
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>}
             </div>
           </div>
 
           <div className="flex items-center">
             <input
-              id="agree-terms"
-              name="agree-terms"
               type="checkbox"
               required
-              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              className="h-4 w-4 text-green-600 border-gray-300 rounded"
             />
-            <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900">
+            <label className="ml-2 block text-sm text-gray-900">
               I agree to the{' '}
-              <a href="#" className="text-green-600 hover:text-green-500">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-green-600 hover:text-green-500">
-                Privacy Policy
-              </a>
+              <a href="#" className="text-green-600 hover:text-green-500">Terms of Service</a> and{' '}
+              <a href="#" className="text-green-600 hover:text-green-500">Privacy Policy</a>
             </label>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Creating account...' : 'Create account'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? 'Creating account...' : 'Create account'}
+          </button>
 
           <div className="mt-4 p-4 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">

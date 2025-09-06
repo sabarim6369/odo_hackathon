@@ -18,6 +18,7 @@ model User {
   email     String     @unique
   password  String
   createdAt DateTime   @default(now())
+    profilePic String?  
 
   products  Product[]
   cart      Cart[]
@@ -27,7 +28,6 @@ model User {
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-  products Product[]
 }
 
 model Product {
@@ -35,13 +35,14 @@ model Product {
   title       String
   description String
   price       Float
+  quantity    Int              @default(0)
   createdAt   DateTime         @default(now())
 
   ownerId     Int
   owner       User             @relation(fields: [ownerId], references: [id])
 
   categoryId  Int
-  category    Category         @relation(fields: [categoryId], references: [id])
+  category    String?
 
   images      ProductImage[]
   attributes  ProductAttribute[]
@@ -79,6 +80,7 @@ model Purchase {
   id         Int      @id @default(autoincrement())
   userId     Int
   productId  Int
+  quantity   Int      @default(1)
   purchasedAt DateTime @default(now())
 
   user       User     @relation(fields: [userId], references: [id])

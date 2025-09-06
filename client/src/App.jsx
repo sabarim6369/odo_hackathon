@@ -15,7 +15,6 @@ import { ToastContainer } from './components/toast';
 import useUserStore from './stores/userStore';
 import useToastStore from './stores/toastStore';
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user } = useUserStore();
   return user.isLoggedIn ? children : <Navigate to="/login" replace />;

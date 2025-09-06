@@ -8,6 +8,7 @@ import { uploadMultipleImagesToCloudinary } from '../utils/cloudinary';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
+import axios from 'axios';
 import useToast from '../hooks/useToast';
 
 const AddProduct = () => {
@@ -33,33 +34,62 @@ const AddProduct = () => {
     resolver: zodResolver(productSchema)
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const newProduct = {
-        ...data,
-        userId: user.id,
-        image: cloudinaryUrls.length > 0 ? cloudinaryUrls[0] : `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
-        images: cloudinaryUrls.length > 0 ? cloudinaryUrls : [`https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`],
-        // Add location data if available
-        ...(useCurrentLocation && location && {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          location: location.address?.formatted || 'Current Location'
-        }),
-        ...(manualLocation && !useCurrentLocation && {
-          location: manualLocation
-        })
-      };
-      
-      addProduct(newProduct);
-      
-      success('Product Added!', 'Your product has been successfully listed and is now available for sale.');
-      navigate('/');
-    } catch (err) {
-      console.error('Error adding product:', err);
-      error('Failed to Sell Product', 'Something went wrong while listing your product. Please try again.');
-    }
-  };
+const onSubmit = async (data) => {
+      const selectedCategory = categories.find(c => c.id === Number(data.categoryId));
+
+  try {
+    const payload = {
+      title: data.title,
+      description: data.description,
+      price: Number(data.price),
+      quantity: Number(data.quantity),
+       categoryId: Number(data.categoryId),
+      category: selectedCategory ? selectedCategory.name : null, // send name too
+      images: cloudinaryUrls.length > 0
+        ? cloudinaryUrls.map(url => ({ url }))
+        : [{ url: `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}` }],
+
+      userId: user.id,
+
+      // Add location data if available
+      ...(useCurrentLocation && location && {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        location: location.address?.formatted || 'Current Location'
+      }),
+
+      ...(manualLocation && !useCurrentLocation && {
+        location: manualLocation
+      })
+    };
+    const token=localStorage.getItem("token");
+     const response = await axios.post("http://localhost:5000/products", payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+
+      },
+    });
+
+    // Now just use payload directly
+    addProduct(payload);
+
+    success(
+      'Product Added!',
+      'Your product has been successfully listed and is now available for sale.'
+    );
+    navigate('/');
+  } catch (err) {
+    console.error('Error adding product:', err);
+    error(
+      'Failed to Add Product',
+      'Something went wrong while listing your product. Please try again.'
+    );
+  }
+};
+
+
+
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -363,21 +393,22 @@ const AddProduct = () => {
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
             Category *
           </label>
-          <select
-            {...register('category')}
-            id="category"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          {errors.category && (
-            <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
-          )}
+<select
+  {...register('categoryId')}
+  id="category"
+  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+>
+  <option value="">Select a category</option>
+  {categories.map((category) => (
+    <option key={category.id} value={category.id}>
+      {category.name}
+    </option>
+  ))}
+</select>
+{errors.categoryId && (
+  <p className="mt-1 text-sm text-red-600">{errors.categoryId.message}</p>
+)}
+
         </div>
 
         {/* Description */}

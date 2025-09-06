@@ -1,4 +1,4 @@
-const prisma = require('../prismaClient');
+const prisma = require('../prisma/client/prismaClient');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -15,7 +15,7 @@ const register = async (req, res) => {
     const user = await prisma.user.create({
       data: { name, email, password: hashed }
     });
-
+    console.log(user);
     res.status(201).json({ message: "User registered", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -30,12 +30,53 @@ const login = async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
-
+   console.log(user.id)
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1d" });
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+const getProfile = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { id: true, name: true, email: true, profilePic: true, createdAt: true }
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-module.exports = { register, login };
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Update Profile
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email, password, profilePic } = req.body;
+
+    let data = {};
+    if (name) data.name = name;
+    if (email) data.email = email;
+    if (profilePic) data.profilePic = profilePic;
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data,
+      select: { id: true, name: true, email: true, profilePic: true, createdAt: true }
+    });
+
+    res.json({ message: "Profile updated", user });
+  } catch (err) {
+    if (err.code === "P2002") {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { register, login, getProfile, updateProfile };

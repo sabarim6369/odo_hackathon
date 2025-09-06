@@ -5,12 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginSchema } from '../utils/validation';
 import useUserStore from '../stores/userStore';
-
+import axios from 'axios';
+import useToast from '../hooks/useToast';
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
+    const { success, error } = useToast();
+
 
   const {
     register,
@@ -20,22 +23,36 @@ const Login = () => {
     resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async (data) => {
-    // Mock login - in real app, this would call an API
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-    
-    const userData = {
-      id: 1,
-      username: 'demo_user',
-      email: data.email
-    };
-    
-    login(userData);
-    
+const onSubmit = async (data) => {
+  try {
+    // Call backend login API
+    const response = await axios.post("http://localhost:5000/auth/login", data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Extract token + user details from response
+    const { token, user } = response.data;
+
+    // Save token in localStorage
+    localStorage.setItem("token", token);
+
+    // Save user in zustand store (if needed)
+    login(user);
+        success("Login Successful", "You have successfully logged in.");
+
+
     // Redirect to previous page or dashboard
-    const from = location.state?.from || '/dashboard';
+    const from = location.state?.from || "/dashboard";
     navigate(from, { replace: true });
-  };
+
+  } catch (err) {
+    console.error("Login failed:", err.response?.data || err.message);
+    error(err.response?.data?.message || "Login failed, please try again.");
+  }
+};
+
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
