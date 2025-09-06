@@ -2,51 +2,51 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 const mockPurchases = [
-  {
-    id: 1,
-    productId: 1,
-    title: "Vintage Leather Jacket",
-    price: 7055,
-    purchaseDate: "2024-12-15",
-    status: "Delivered",
-    transactionId: "TXN001",
-  },
-  {
-    id: 2,
-    productId: 4,
-    title: "Canon DSLR Camera",
-    price: 37350,
-    purchaseDate: "2024-12-10",
-    status: "Delivered",
-    transactionId: "TXN002",
-  },
+  // {
+  //   id: 1,
+  //   productId: 1,
+  //   title: "Vintage Leather Jacket",
+  //   price: 7055,
+  //   purchaseDate: "2024-12-15",
+  //   status: "Delivered",
+  //   transactionId: "TXN001",
+  // },
+  // {
+  //   id: 2,
+  //   productId: 4,
+  //   title: "Canon DSLR Camera",
+  //   price: 37350,
+  //   purchaseDate: "2024-12-10",
+  //   status: "Delivered",
+  //   transactionId: "TXN002",
+  // },
 ];
 
 const mockTransactions = [
-  {
-    id: "TXN001",
-    productName: "Vintage Leather Jacket",
-    amount: 7055,
-    status: "Completed",
-    date: "2024-12-15",
-    type: "Purchase",
-  },
-  {
-    id: "TXN002",
-    productName: "Canon DSLR Camera",
-    amount: 37350,
-    status: "Completed",
-    date: "2024-12-10",
-    type: "Purchase",
-  },
-  {
-    id: "TXN003",
-    productName: "Designer Handbag",
-    amount: 16600,
-    status: "Completed",
-    date: "2024-12-08",
-    type: "Sale",
-  },
+  // {
+  //   id: "TXN001",
+  //   productName: "Vintage Leather Jacket",
+  //   amount: 7055,
+  //   status: "Completed",
+  //   date: "2024-12-15",
+  //   type: "Purchase",
+  // },
+  // {
+  //   id: "TXN002",
+  //   productName: "Canon DSLR Camera",
+  //   amount: 37350,
+  //   status: "Completed",
+  //   date: "2024-12-10",
+  //   type: "Purchase",
+  // },
+  // {
+  //   id: "TXN003",
+  //   productName: "Designer Handbag",
+  //   amount: 16600,
+  //   status: "Completed",
+  //   date: "2024-12-08",
+  //   type: "Sale",
+  // },
 ];
 
 const usePurchaseStore = create(

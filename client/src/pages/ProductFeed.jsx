@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard';
 import LocationPrompt from '../components/LocationPrompt';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
+import { categories } from '../utils/validation';
 
 const ProductFeed = () => {
   const [sortBy, setSortBy] = useState('newest');
@@ -15,31 +16,32 @@ const ProductFeed = () => {
   const [availableCategories, setAvailableCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
 
   const { user } = useUserStore();
   const { location, permissionStatus, refreshLocationIfStale } = useLocationStore();
   const navigate = useNavigate();
 
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-
   // Fetch products from backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const token=localStorage.getItem('token')
-        const res = await axios.get('http://localhost:5000/products/allproducts',{
-          headers: {
-            Authorization: `Bearer ${token}`
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          "http://localhost:5000/products/allproducts",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
         const fetchedProducts = res.data || [];
         setProducts(fetchedProducts);
 
-        // Extract categories dynamically
-        const categories = ['All', ...new Set(fetchedProducts.map(p => p.category || 'Other'))];
-        setAvailableCategories(categories);
+        // Always show all categories (static list + "All")
+        setAvailableCategories(["All", ...categories.map(c => c.name)]);
       } catch (err) {
-        console.error('Error fetching products:', err);
+        console.error("Error fetching products:", err);
       }
     };
 
@@ -82,9 +84,12 @@ const ProductFeed = () => {
 
   // Apply filters
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = product.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesCategory =
-      selectedCategory === 'All' || product.category === selectedCategory;
+      selectedCategory === 'All' ||
+      product.category?.name === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 

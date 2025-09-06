@@ -93,14 +93,19 @@ const Cart = () => {
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex flex-col sm:flex-row gap-4">
-                {/* Product Image */}
-                <div className="flex-shrink-0">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                </div>
+              
+<div className="flex-shrink-0">
+  <img
+    src={
+      item.images && item.images.length > 0
+        ? item.images[0].url // first image
+        : item.image           // fallback
+    }
+    alt={item.title}
+    className="w-24 h-24 object-cover rounded-lg"
+  />
+</div>
+
 
                 {/* Product Info */}
                 <div className="flex-1 min-w-0">
