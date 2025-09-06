@@ -1,50 +1,37 @@
 const prisma = require('../prisma/client/prismaClient');
-const sendEmailToQueue = require('../Services/EmailService'); // adjust path
+const sendEmailToQueue = require('../Services/EmailService');
 
 const checkout = async (req, res) => {
   try {
     const userId = req.userId;
-    const { productId } = req.body; // <-- optional single product purchase
+    const { productId } = req.body;
 
     let cartItems;
 
     if (productId) {
-      // Purchase a specific product
       const product = await prisma.product.findUnique({
         where: { id: productId },
         include: { images: true, owner: true }
       });
-
       if (!product) return res.status(404).json({ message: "Product not found" });
 
-      cartItems = [{
-        product,
-        productId: product.id,
-        quantity: 1 // default quantity 1 if direct purchase
-      }];
+      cartItems = [{ product, productId: product.id, quantity: 1 }];
     } else {
-      // Purchase everything in the cart
       cartItems = await prisma.cart.findMany({
         where: { userId },
         include: { product: { include: { images: true, owner: true } } }
       });
-
       if (cartItems.length === 0) return res.json({ message: "Cart is empty" });
     }
 
-    // Create purchases in a transaction
     const purchases = await prisma.$transaction(
       cartItems.map(item =>
-        prisma.purchase.create({ data: { userId, productId: item.productId, quantity: item.quantity } })
+        prisma.purchase.create({ data: { userId, productId: item.productId } })
       )
     );
 
-    // If cart purchase, clear the cart
-    if (!productId) {
-      await prisma.cart.deleteMany({ where: { userId } });
-    }
+    if (!productId) await prisma.cart.deleteMany({ where: { userId } });
 
-    // Prepare email data
     const buyer = await prisma.user.findUnique({ where: { id: userId } });
 
     const itemsForEmail = cartItems.map(item => ({
@@ -56,11 +43,11 @@ const checkout = async (req, res) => {
 
     const totalPrice = itemsForEmail.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-    // Send to email queue
     const emailData = {
+      type: "purchase", // add a type to distinguish email templates
       buyerEmail: buyer.email,
       buyerName: buyer.name,
-      ownerEmail: cartItems[0].product.owner.email, // assume same owner
+      ownerEmail: cartItems[0].product.owner.email,
       ownerName: cartItems[0].product.owner.name,
       items: itemsForEmail,
       totalPrice
@@ -69,6 +56,47 @@ const checkout = async (req, res) => {
     await sendEmailToQueue(emailData);
 
     res.json({ message: "Checkout successful", purchases });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Cancel purchase
+const cancelPurchase = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { purchaseId } = req.body;
+
+    const purchase = await prisma.purchase.findUnique({
+      where: { id: purchaseId },
+      include: { product: { include: { owner: true, images: true } }, user: true }
+    });
+
+    if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+    if (purchase.userId !== userId) return res.status(403).json({ message: "Unauthorized" });
+
+    await prisma.purchase.delete({ where: { id: purchaseId } });
+
+    // Send cancel email
+    const emailData = {
+      type: "cancel",
+      buyerEmail: purchase.user.email,
+      buyerName: purchase.user.name,
+      ownerEmail: purchase.product.owner.email,
+      ownerName: purchase.product.owner.name,
+      items: [{
+        name: purchase.product.title,
+        quantity: 1,
+        price: purchase.product.price,
+        image: purchase.product.images[0]?.url || ''
+      }],
+      totalPrice: purchase.product.price
+    };
+
+    await sendEmailToQueue(emailData);
+
+    res.json({ message: "Purchase canceled successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -88,4 +116,4 @@ const getPurchases = async (req, res) => {
   }
 };
 
-module.exports = { checkout, getPurchases };
+module.exports = { checkout, getPurchases, cancelPurchase };

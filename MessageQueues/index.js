@@ -13,16 +13,11 @@ async function startWorker() {
 
   channel.consume(queue, async (msg) => {
     if (!msg) return;
-
-    const { buyerEmail, buyerName, ownerEmail, ownerName, items, totalPrice } = JSON.parse(msg.content.toString());
-    console.log("📥 Received purchase job:", buyerEmail);
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
-    });
-
- const buyerHtml = `
+      const data = JSON.parse(msg.content.toString());
+ let buyerHtml = "";
+  let ownerHtml = "";
+  if (data.type === "purchase") {
+    buyerHtml= `
 <div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#f9f9f9; border-radius:10px; border:1px solid #ddd;">
   <h1 style="color:#4CAF50; text-align:center;">🎉 Thank You for Your Purchase, ${buyerName}!</h1>
   
@@ -62,8 +57,7 @@ async function startWorker() {
   <p style="font-size:14px; color:#888; text-align:center;">Thank you for trusting us! We hope you enjoy your products and come back for more! 💚</p>
 </div>
 `;
-
-const ownerHtml = `
+    ownerHtml=  `
 <div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#fff3f0; border-radius:10px; border:1px solid #ffd0c4;">
   <h1 style="color:#FF5722; text-align:center;">📦 New Order Received!</h1>
 
@@ -104,6 +98,46 @@ const ownerHtml = `
   <p style="font-size:14px; color:#888; text-align:center;">Keep up the great work! Every order counts towards your success 🚀</p>
 </div>
 `;
+
+  }
+  else if (data.type === "cancel") {
+    // cancel email template
+    buyerHtml = `
+      <div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#fff3f0; border-radius:10px; border:1px solid #ffd0c4;">
+        <h1 style="color:#FF5722; text-align:center;">❌ Purchase Canceled</h1>
+        <p>Hi ${data.buyerName},</p>
+        <p>Your purchase of the following product has been successfully canceled:</p>
+        <ul>
+          ${data.items.map(i => `<li><img src="${i.image}" width="50"/> ${i.name} - $${i.price}</li>`).join('')}
+        </ul>
+        <p>Total refunded amount: <strong>$${data.totalPrice}</strong></p>
+        <p>We hope to serve you again soon!</p>
+      </div>
+    `;
+
+    ownerHtml = `
+      <div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#f9f9f9; border-radius:10px; border:1px solid #ddd;">
+        <h1 style="color:#FF5722; text-align:center;">⚠️ Order Canceled</h1>
+        <p>Hi ${data.ownerName},</p>
+        <p>${data.buyerName} has canceled their purchase of the following product:</p>
+        <ul>
+          ${data.items.map(i => `<li><img src="${i.image}" width="50"/> ${i.name} - $${i.price}</li>`).join('')}
+        </ul>
+        <p>Total amount affected: <strong>$${data.totalPrice}</strong></p>
+        <p>Please adjust your inventory accordingly.</p>
+      </div>
+    `;
+  }
+
+    const { buyerEmail, buyerName, ownerEmail, ownerName, items, totalPrice } = JSON.parse(msg.content.toString());
+    console.log("📥 Received purchase job:", buyerEmail);
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
+    });
+
+
 
 
     try {
