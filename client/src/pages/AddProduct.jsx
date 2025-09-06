@@ -9,6 +9,7 @@ import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
 import axios from 'axios';
+import useToast from '../hooks/useToast';
 
 const AddProduct = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -22,6 +23,7 @@ const AddProduct = () => {
   const { addProduct } = useProductStore();
   const { user } = useUserStore();
   const { location, isLoading, getCurrentLocation } = useLocationStore();
+  const { success, error } = useToast();
   const navigate = useNavigate();
 
   const {
@@ -32,33 +34,38 @@ const AddProduct = () => {
     resolver: zodResolver(productSchema)
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const newProduct = {
-        ...data,
-        userId: user.id,
-        image: cloudinaryUrls.length > 0 ? cloudinaryUrls[0] : `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
-        images: cloudinaryUrls.length > 0 ? cloudinaryUrls : [`https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`],
-        // Add location data if available
-        ...(useCurrentLocation && location && {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          location: location.address?.formatted || 'Current Location'
-        }),
-        ...(manualLocation && !useCurrentLocation && {
-          location: manualLocation
-        })
-      };
-      
-      addProduct(newProduct);
-      
-      alert('Product added successfully!');
-      navigate('/');
-    } catch (error) {
-      console.error('Error adding product:', error);
-      alert('Failed to add product. Please try again.');
-    }
-  };
+ const onSubmit = async (data) => {
+  try {
+    const newProduct = {
+      ...data,
+      userId: user.id, // current logged-in user
+      images: cloudinaryUrls.length > 0
+        ? cloudinaryUrls.map(url => ({ url }))
+        : [{ url: `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}` }],
+      // Location handling
+      ...(useCurrentLocation && location && {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        location: location.address?.formatted || 'Current Location'
+      }),
+      ...(manualLocation && !useCurrentLocation && {
+        location: manualLocation
+      }),
+    };
+
+    // Send to backend
+    const response = await axios.post('http://localhost:5000/products', newProduct, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    success('Product Added!', 'Your product has been successfully listed and is now available for sale.');
+    navigate('/'); // redirect after success
+  } catch (err) {
+    console.error('Error adding product:', err.response?.data || err.message);
+    error('Failed to Add Product', 'Something went wrong while listing your product. Please try again.');
+  }
+};
+
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -370,7 +377,7 @@ const AddProduct = () => {
             <option value="">Select a category</option>
             {categories.map((category) => (
               <option key={category} value={category}>
-                {category}
+                {category.name}
               </option>
             ))}
           </select>
