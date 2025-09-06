@@ -130,15 +130,19 @@ const Wishlist = () => {
       {/* Wishlist Items Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
         {wishlistItems.map(product => (
-          <div key={product.id} className="relative">
+          <div key={product.id} className="relative group">
             <ProductCard product={product} />
             
-            {/* Overlay Actions */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 rounded-lg flex items-end opacity-0 hover:opacity-100">
-              <div className="w-full p-4 bg-gradient-to-t from-black/50 to-transparent rounded-b-lg">
+            {/* Action Buttons Overlay - Only covers bottom portion */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-lg opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <div className="p-4">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleAddToCart(product)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
                     className="flex-1 flex items-center justify-center space-x-1 bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600 transition-colors text-sm"
                   >
                     <ShoppingCart size={14} />
@@ -146,7 +150,11 @@ const Wishlist = () => {
                   </button>
                   
                   <button
-                    onClick={() => handleRemoveFromWishlist(product.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemoveFromWishlist(product.id);
+                    }}
                     className="flex items-center justify-center bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition-colors"
                     title="Remove from wishlist"
                   >
@@ -194,6 +202,7 @@ const Wishlist = () => {
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="font-semibold text-blue-900 mb-2">💡 Wishlist Tips</h3>
         <ul className="text-sm text-blue-800 space-y-1">
+          <li>• Click on any product to view detailed information</li>
           <li>• Save items you're considering for future purchase</li>
           <li>• Share your wishlist with friends and family</li>
           <li>• Get notified when prices drop (coming soon)</li>
