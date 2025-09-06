@@ -1,4 +1,5 @@
-const prisma = require('../prismaClient');
+const prisma = require('../prisma/client/prismaClient');
+
 
 const checkout = async (req, res) => {
   try {
