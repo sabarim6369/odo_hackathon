@@ -12,11 +12,75 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String     @unique
   password  String
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+
+  products  Product[]
+  cart      Cart[]
+  purchases Purchase[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
+  createdAt   DateTime         @default(now())
+
+  ownerId     Int
+  owner       User             @relation(fields: [ownerId], references: [id])
+
+  categoryId  Int
+  category    Category         @relation(fields: [categoryId], references: [id])
+
+  images      ProductImage[]
+  attributes  ProductAttribute[]
+
+  cartItems   Cart[]
+  purchases   Purchase[]
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  url       String
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model ProductAttribute {
+  id        Int     @id @default(autoincrement())
+  key       String
+  value     String
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  quantity  Int      @default(1)
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Purchase {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  productId  Int
+  purchasedAt DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
 }
