@@ -1,7 +1,7 @@
 const amqp = require('amqplib');
 
 async function sendEmailToQueue(emailData) {
-  const connection = await amqp.connect('amqp://localhost'); // or your RabbitMQ cloud URL
+  const connection = await amqp.connect('amqp://localhost');
   const channel = await connection.createChannel();
 
   const queue = 'emailQueue';

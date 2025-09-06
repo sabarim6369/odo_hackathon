@@ -1,4 +1,5 @@
 const prisma = require('../prisma/client/prismaClient');
+const redis=require('../Redis/redis');
 
 const createProduct = async (req, res) => {
   try {
