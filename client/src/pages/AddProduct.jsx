@@ -8,6 +8,7 @@ import { uploadMultipleImagesToCloudinary } from '../utils/cloudinary';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
+import axios from 'axios';
 import useToast from '../hooks/useToast';
 
 const AddProduct = () => {
@@ -33,33 +34,71 @@ const AddProduct = () => {
     resolver: zodResolver(productSchema)
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const newProduct = {
-        ...data,
-        userId: user.id,
-        image: cloudinaryUrls.length > 0 ? cloudinaryUrls[0] : `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
-        images: cloudinaryUrls.length > 0 ? cloudinaryUrls : [`https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`],
-        // Add location data if available
-        ...(useCurrentLocation && location && {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          location: location.address?.formatted || 'Current Location'
-        }),
-        ...(manualLocation && !useCurrentLocation && {
-          location: manualLocation
-        })
-      };
-      
-      addProduct(newProduct);
-      
-      success('Product Added!', 'Your product has been successfully listed and is now available for sale.');
-      navigate('/');
-    } catch (err) {
-      console.error('Error adding product:', err);
-      error('Failed to Add Product', 'Something went wrong while listing your product. Please try again.');
-    }
-  };
+const onSubmit = async (data) => {
+  try {
+    const selectedCategory = categories.find(
+      (cat) => cat.id === Number(data.categoryId)
+    );
+    console.log(cloudinaryUrls)
+
+    const payload = {
+      title: data.title,
+      description: data.description,
+      price: Number(data.price),
+      quantity: Number(data.quantity),
+      categoryId: Number(data.categoryId),
+      categoryName: selectedCategory?.name || "Unknown",
+      images: cloudinaryUrls.length > 0
+        ? cloudinaryUrls.map((url) => ({ url }))
+        : [
+            {
+              url: `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(
+                data.title
+              )}`,
+            },
+          ],
+      userId: user.id,
+      ...(useCurrentLocation && location && {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        location: location.address?.formatted || "Current Location",
+      }),
+      ...(manualLocation && !useCurrentLocation && {
+        location: manualLocation,
+      }),
+    };
+
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+      "http://localhost:5000/products",
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    addProduct(payload);
+
+    success(
+      "Product Added!",
+      "Your product has been successfully listed and is now available for sale."
+    );
+    navigate("/");
+  } catch (err) {
+    console.error("Error adding product:", err);
+    error(
+      "Failed to Add Product",
+      "Something went wrong while listing your product. Please try again."
+    );
+  }
+};
+
+
+
+
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -164,7 +203,7 @@ const AddProduct = () => {
           <ArrowLeft size={20} className="mr-2" />
           Back to Home
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Sell New Product</h1>
         <p className="text-gray-600">
           List your pre-owned item and contribute to sustainable living
         </p>
@@ -285,7 +324,6 @@ const AddProduct = () => {
                       </div>
                     )}
                     
-                    {/* Success Indicator */}
                     {cloudinaryUrls[index] && !imageUploading && (
                       <div className="absolute bottom-2 left-2 bg-green-500 text-white rounded-full p-1" title="Uploaded successfully">
                         <CheckCircle size={16} />
@@ -364,14 +402,14 @@ const AddProduct = () => {
             Category *
           </label>
           <select
-            {...register('category')}
+            {...register('categoryId')}
             id="category"
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -509,9 +547,9 @@ const AddProduct = () => {
                 Uploading Images...
               </>
             ) : isSubmitting ? (
-              'Adding Product...'
+              'Listing Product...'
             ) : (
-              'Add Product'
+              'Sell Product'
             )}
           </button>
         </div>

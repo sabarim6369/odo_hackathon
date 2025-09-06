@@ -8,6 +8,7 @@ const useUserStore = create(
         id: null,
         username: "",
         email: "",
+        profileImage: "",
         isLoggedIn: false,
       },
 
@@ -25,6 +26,7 @@ const useUserStore = create(
             id: null,
             username: "",
             email: "",
+            profileImage: "",
             isLoggedIn: false,
           },
         }),

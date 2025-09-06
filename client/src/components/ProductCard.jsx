@@ -60,34 +60,34 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
       <Link to={`/product/${product.id}`}>
         {/* Product Image */}
-        <div className="relative overflow-hidden">
-          <img 
-            src={product.images && product.images.length > 0 ? product.images[0] : product.image} 
+        <div className="relative overflow-hidden h-48">
+          <img
+            src={
+              product.images && product.images.length > 0
+                ? product.images[0].url
+                : product.image
+            }
             alt={product.title}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          
+
           {/* Multiple Images Indicator */}
           {product.images && product.images.length > 1 && (
             <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
               +{product.images.length - 1} more
             </div>
           )}
-          
+
           <div className="absolute top-2 right-2">
-            <button 
+            <button
               onClick={handleWishlistToggle}
               className={`p-2 rounded-full transition-colors ${
-                isWishlisted 
-                  ? 'bg-red-500 text-white hover:bg-red-600' 
-                  : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                isWishlisted
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-white/80 text-gray-600 hover:bg-white hover:text-red-500"
               }`}
-              title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+              title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <Heart 
-                size={16} 
-                className={isWishlisted ? 'fill-current' : ''} 
-              />
+              <Heart size={16} className={isWishlisted ? "fill-current" : ""} />
             </button>
           </div>
         </div>
@@ -101,24 +101,29 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
             {distance && (
               <div className="flex items-center space-x-1 text-xs text-gray-500">
                 <MapPin size={12} />
-                <span>{distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away</span>
+                <span>
+                  {distance < 1
+                    ? `${Math.round(distance * 1000)}m`
+                    : `${distance.toFixed(1)}km`}{" "}
+                  away
+                </span>
               </div>
             )}
           </div>
-          
+
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
             {product.title}
           </h3>
-          
+
           <p className="text-gray-600 text-sm mb-3 line-clamp-2">
             {product.description}
           </p>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-green-600">
               {formatPrice(product.price)}
             </span>
-            
+
             {showActions ? (
               <div className="flex space-x-2">
                 <button

@@ -28,7 +28,6 @@ model User {
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-  products Product[]
 }
 
 model Product {
@@ -43,7 +42,7 @@ model Product {
   owner       User             @relation(fields: [ownerId], references: [id])
 
   categoryId  Int
-  category    Category         @relation(fields: [categoryId], references: [id])
+  category    String?
 
   images      ProductImage[]
   attributes  ProductAttribute[]

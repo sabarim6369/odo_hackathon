@@ -3,8 +3,11 @@ const redis=require('../Redis/redis');
 
 const createProduct = async (req, res) => {
   try {
-const { title, description, price, categoryId, images, attributes, quantity } = req.body;
+let { title, description, price, categoryId,category, images, attributes, quantity } = req.body;
     const userId = req.userId;
+   
+  categoryId=1
+    quantity=10;
 
     const product = await prisma.product.create({
       data: {
@@ -13,9 +16,10 @@ const { title, description, price, categoryId, images, attributes, quantity } = 
         price: parseFloat(price),
         quantity: parseInt(quantity),
         categoryId,
-        ownerId: userId,
+        category,
+       owner: { connect: { id: userId } },
         images: { create: images.map(img => ({ url: img.url })) },
-        attributes: { create: attributes.map(attr => ({ key: attr.key, value: attr.value })) }
+        // attributes: { create: attributes.map(attr => ({ key: attr.key, value: attr.value })) }
       },
       include: { images: true, attributes: true }
     });
@@ -46,8 +50,9 @@ const getProducts = async (req, res) => {
 const getAllProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
-      include: { images: true, attributes: true, category: true }
+      include: { images: true, attributes: true }
     });
+    console.log(products)
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -58,7 +63,7 @@ const getProductById = async (req, res) => {
   try {
     const product = await prisma.product.findUnique({
       where: { id: parseInt(req.params.id) },
-      include: { images: true, attributes: true, category: true }
+      include: { images: true, attributes: true}
     });
     res.json(product);
   } catch (err) {

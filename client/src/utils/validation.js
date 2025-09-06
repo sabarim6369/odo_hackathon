@@ -22,8 +22,8 @@ export const productSchema = z.object({
     .string()
     .min(1, "Product title is required")
     .max(100, "Title must be 100 characters or less"),
-  category: z.string().min(1, "Please select a category"),
-  description: z
+  categoryId: z.string().min(1), 
+    description: z
     .string()
     .min(1, "Product description is required")
     .max(500, "Description must be 500 characters or less"),
@@ -37,16 +37,15 @@ export const profileSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters long"),
   email: z.string().email("Please enter a valid email address"),
 });
-
 export const categories = [
-  "Electronics",
-  "Clothing",
-  "Furniture",
-  "Books",
-  "Sports",
-  "Home & Garden",
-  "Toys",
-  "Automotive",
-  "Health & Beauty",
-  "Other",
+  { id: 2, name: "Electronics" },
+  { id: 1, name: "Clothing" },
+  { id: 3, name: "Furniture" },
+  { id: 4, name: "Books" },
+  { id: 5, name: "Sports" },
+  { id: 6, name: "Home & Garden" },
+  { id: 7, name: "Toys" },
+  { id: 8, name: "Automotive" },
+  { id: 9, name: "Health & Beauty" },
+  { id: 10, name: "Other" },
 ];

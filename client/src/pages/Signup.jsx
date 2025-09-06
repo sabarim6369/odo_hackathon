@@ -6,12 +6,14 @@ import { Eye, EyeOff } from 'lucide-react';
 import { signupSchema } from '../utils/validation';
 import useUserStore from '../stores/userStore';
 import axios from 'axios';
+import useToast from '../hooks/useToast';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login } = useUserStore();
   const navigate = useNavigate();
+    const { success, error } = useToast();
 
   const {
     register,
@@ -22,34 +24,47 @@ const Signup = () => {
   });
 
   // onSubmit is now inside the component and can use hooks
-  const onSubmit = async (data) => {
-    try {
-        const payload = {
+ const onSubmit = async (data) => {
+  try {
+    const payload = {
       name: data.username, // map username to name
       email: data.email,
-      password: data.password
+      password: data.password,
     };
 
-      const response = await axios.post('http://localhost:5000/auth/register', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const response = await axios.post("http://localhost:5000/auth/register", payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-      const result = response.data;
+    const result = response.data;
 
-      const userData = {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-      };
+    const userData = {
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+    };
 
-      login(userData); // update store
-      navigate('/dashboard', { replace: true }); // navigate after login
-    } catch (err) {
-      console.error('Registration failed:', err.response?.data || err.message);
-    }
-  };
+    // Update store
+    login(userData);
+
+    // ✅ Show success toast
+    success("Signup Successful", "Your account has been created successfully!");
+
+    // Navigate to dashboard
+    navigate("/dashboard", { replace: true });
+  } catch (err) {
+    console.error("Registration failed:", err.response?.data || err.message);
+
+    // ❌ Show error toast
+    error(
+      "Signup Failed",
+      err.response?.data?.message || "Something went wrong. Please try again."
+    );
+  }
+};
+
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

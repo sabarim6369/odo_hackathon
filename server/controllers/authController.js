@@ -15,7 +15,7 @@ const register = async (req, res) => {
     const user = await prisma.user.create({
       data: { name, email, password: hashed }
     });
-
+    console.log(user);
     res.status(201).json({ message: "User registered", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -30,7 +30,7 @@ const login = async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
-
+   console.log(user.id)
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1d" });
     res.json({ token, user });
   } catch (err) {
