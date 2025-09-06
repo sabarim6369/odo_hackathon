@@ -22,22 +22,89 @@ async function startWorker() {
       auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
     });
 
-    const buyerHtml = `
-      <div style="font-family:Arial; max-width:600px; margin:auto; padding:20px; background:#fff; border-radius:8px;">
-        <h2 style="color:#4CAF50;">Thank you for your purchase, ${buyerName}!</h2>
-        <ul>${items.map(i => `<li><img src="${i.image}" width="50"/> ${i.name} - Qty: ${i.quantity} - $${i.price}</li>`).join('')}</ul>
-        <p><strong>Total: $${totalPrice}</strong></p>
-      </div>
-    `;
+ const buyerHtml = `
+<div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#f9f9f9; border-radius:10px; border:1px solid #ddd;">
+  <h1 style="color:#4CAF50; text-align:center;">🎉 Thank You for Your Purchase, ${buyerName}!</h1>
+  
+  <p style="font-size:16px;">We are thrilled you chose our store! Your order has been successfully placed. Below are the details of your purchase:</p>
 
-    const ownerHtml = `
-      <div style="font-family:Arial; max-width:600px; margin:auto; padding:20px; background:#fff; border-radius:8px;">
-        <h2 style="color:#FF5722;">New Order Received!</h2>
-        <p>${buyerName} purchased your products:</p>
-        <ul>${items.map(i => `<li><img src="${i.image}" width="50"/> ${i.name} - Qty: ${i.quantity} - $${i.price}</li>`).join('')}</ul>
-        <p><strong>Total Amount: $${totalPrice}</strong></p>
-      </div>
-    `;
+  <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <thead>
+      <tr style="background:#4CAF50; color:#fff;">
+        <th style="padding:10px; text-align:left;">Product</th>
+        <th style="padding:10px; text-align:center;">Quantity</th>
+        <th style="padding:10px; text-align:right;">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map(i => `
+        <tr style="border-bottom:1px solid #ddd;">
+          <td style="padding:10px;">
+            <img src="${i.image}" width="50" style="vertical-align:middle; border-radius:5px; margin-right:10px;"/> ${i.name}
+          </td>
+          <td style="padding:10px; text-align:center;">${i.quantity}</td>
+          <td style="padding:10px; text-align:right;">$${i.price}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <p style="font-size:18px; text-align:right; margin-top:20px;"><strong>Total: $${totalPrice}</strong></p>
+
+  <p style="font-size:16px; color:#555;">Your order will be processed and shipped shortly. You will receive tracking updates via email once it’s on the way!</p>
+
+  <p style="text-align:center; margin-top:30px;">
+    <a href="https://yourstore.com/orders" style="background:#4CAF50; color:white; padding:12px 25px; text-decoration:none; border-radius:5px;">View Order Details</a>
+  </p>
+
+  <hr style="margin:40px 0; border:none; border-top:1px solid #eee;"/>
+  
+  <p style="font-size:14px; color:#888; text-align:center;">Thank you for trusting us! We hope you enjoy your products and come back for more! 💚</p>
+</div>
+`;
+
+const ownerHtml = `
+<div style="font-family:Arial, sans-serif; max-width:600px; margin:auto; padding:30px; background:#fff3f0; border-radius:10px; border:1px solid #ffd0c4;">
+  <h1 style="color:#FF5722; text-align:center;">📦 New Order Received!</h1>
+
+  <p style="font-size:16px;">Hello ${ownerName},</p>
+  <p style="font-size:16px;">${buyerName} has just purchased items from your store. Here are the details:</p>
+
+  <table style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <thead>
+      <tr style="background:#FF5722; color:#fff;">
+        <th style="padding:10px; text-align:left;">Product</th>
+        <th style="padding:10px; text-align:center;">Quantity</th>
+        <th style="padding:10px; text-align:right;">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map(i => `
+        <tr style="border-bottom:1px solid #ddd;">
+          <td style="padding:10px;">
+            <img src="${i.image}" width="50" style="vertical-align:middle; border-radius:5px; margin-right:10px;"/> ${i.name}
+          </td>
+          <td style="padding:10px; text-align:center;">${i.quantity}</td>
+          <td style="padding:10px; text-align:right;">$${i.price}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <p style="font-size:18px; text-align:right; margin-top:20px;"><strong>Total Amount: $${totalPrice}</strong></p>
+
+  <p style="font-size:16px; color:#555;">Please process this order promptly to ensure a smooth experience for the buyer. Thank you for providing amazing products!</p>
+
+  <p style="text-align:center; margin-top:30px;">
+    <a href="https://yourstore.com/admin/orders" style="background:#FF5722; color:white; padding:12px 25px; text-decoration:none; border-radius:5px;">View Order</a>
+  </p>
+
+  <hr style="margin:40px 0; border:none; border-top:1px solid #ffd0c4;"/>
+  
+  <p style="font-size:14px; color:#888; text-align:center;">Keep up the great work! Every order counts towards your success 🚀</p>
+</div>
+`;
+
 
     try {
       await transporter.sendMail({ from: process.env.MAIL_USER, to: buyerEmail, subject: "Purchase Confirmation", html: buyerHtml });
