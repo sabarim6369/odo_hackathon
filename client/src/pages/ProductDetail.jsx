@@ -1,54 +1,94 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { ShoppingCart, ArrowLeft, Heart, Share2 } from 'lucide-react';
 import { formatPrice } from '../utils/helpers';
-import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
 import usePurchaseStore from '../stores/purchaseStore';
 import useWishlistStore from '../stores/wishlistStore';
 import useToast from '../hooks/useToast';
+import ProductCard from '../components/ProductCard';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getProductById } = useProductStore();
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
   const { addPurchase } = usePurchaseStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
   const { success, error, warning } = useToast();
 
-  const product = getProductById(id);
-  
-  // State for image gallery
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+
+
+useEffect(() => {
+  const fetchProduct = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await axios.get(`http://localhost:5000/products/prod/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProduct(res.data);
+
+      // fetch related products once product is fetched
+      const relatedRes = await axios.post(
+        "http://localhost:5000/products/prod/related",
+        {
+          categoryId: res.data.categoryId,
+          productId: res.data.id
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setRelatedProducts(relatedRes.data);
+
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      error('Failed to fetch product', 'Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProduct();
+}, [id]);
+
   
-  // Get product images array, fallback to single image
-  const productImages = product?.images && product.images.length > 0 
-    ? product.images 
-    : product?.image 
-      ? [product.image] 
-      : [];
 
-  const isProductInWishlist = product ? isInWishlist(product.id) : false;
-
-  if (!product) {
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Back to Products
-          </button>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <p>Loading product...</p>
       </div>
     );
   }
+
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+        <button
+          onClick={() => navigate('/')}
+          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+        >
+          Back to Products
+        </button>
+      </div>
+    );
+  }
+
+  const productImages = product.images && product.images.length > 0
+    ? product.images.map(img => img.url)
+    : product.image
+      ? [product.image]
+      : [];
+
+  const isProductInWishlist = isInWishlist(product.id);
 
   const handleAddToCart = () => {
     if (!user.isLoggedIn) {
@@ -56,7 +96,6 @@ const ProductDetail = () => {
       navigate('/login', { state: { from: window.location.pathname } });
       return;
     }
-    
     try {
       addToCart(product);
       success('Added to Cart', `${product.title} has been added to your cart!`);
@@ -71,12 +110,8 @@ const ProductDetail = () => {
       navigate('/login', { state: { from: window.location.pathname } });
       return;
     }
-    
     try {
-      // Mock payment process
-      const cartItems = [product];
-      addPurchase(cartItems);
-      
+      addPurchase([product]);
       success('Purchase Successful!', 'Your order has been placed. Check your purchase history.');
       navigate('/purchases');
     } catch {
@@ -91,16 +126,12 @@ const ProductDetail = () => {
       return;
     }
 
-    try {
-      if (isProductInWishlist) {
-        removeFromWishlist(product.id);
-        warning('Removed from Wishlist', `${product.title} has been removed from your wishlist.`);
-      } else {
-        addToWishlist(product);
-        success('Added to Wishlist', `${product.title} has been added to your wishlist!`);
-      }
-    } catch {
-      error('Action Failed', 'Could not update your wishlist. Please try again.');
+    if (isProductInWishlist) {
+      removeFromWishlist(product.id);
+      warning('Removed from Wishlist', `${product.title} has been removed from your wishlist.`);
+    } else {
+      addToWishlist(product);
+      success('Added to Wishlist', `${product.title} has been added to your wishlist!`);
     }
   };
 
@@ -110,13 +141,9 @@ const ProductDetail = () => {
         title: product.title,
         text: product.description,
         url: window.location.href,
-      }).then(() => {
-        success('Shared Successfully', 'Product has been shared!');
-      }).catch(() => {
-        error('Share Failed', 'Could not share this product. Please try again.');
-      });
+      }).then(() => success('Shared Successfully', 'Product has been shared!'))
+        .catch(() => error('Share Failed', 'Could not share this product.'));
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href).then(() => {
         success('Link Copied', 'Product link has been copied to your clipboard!');
       }).catch(() => {
@@ -136,33 +163,32 @@ const ProductDetail = () => {
         <span>Back to Products</span>
       </button>
 
-      {/* Product Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Product Image Gallery */}
+        {/* Image Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+          <div className="w-full h-96 rounded-lg overflow-hidden bg-gray-100">
             <img
               src={productImages[selectedImageIndex] || product.image}
               alt={product.title}
               className="w-full h-full object-cover"
             />
           </div>
-          
-          {/* Thumbnail gallery */}
+
+          {/* Thumbnails */}
           {productImages.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {productImages.map((image, index) => (
+              {productImages.map((img, index) => (
                 <div
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 cursor-pointer transition-colors ${
-                    selectedImageIndex === index 
-                      ? 'border-green-500' 
+                  className={`w-full h-24 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
+                    selectedImageIndex === index
+                      ? 'border-green-500'
                       : 'border-transparent hover:border-green-300'
                   }`}
                 >
                   <img
-                    src={image}
+                    src={img}
                     alt={`${product.title} view ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -170,8 +196,7 @@ const ProductDetail = () => {
               ))}
             </div>
           )}
-          
-          {/* Image Counter */}
+
           {productImages.length > 1 && (
             <div className="text-center text-sm text-gray-500">
               {selectedImageIndex + 1} of {productImages.length} images
@@ -181,32 +206,22 @@ const ProductDetail = () => {
 
         {/* Product Info */}
         <div className="space-y-6">
-          {/* Category Badge */}
           <div>
             <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
               {product.category}
             </span>
           </div>
 
-          {/* Title and Price */}
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {product.title}
-            </h1>
-            <div className="text-3xl font-bold text-green-600">
-              {formatPrice(product.price)}
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+            <div className="text-3xl font-bold text-green-600">{formatPrice(product.price)}</div>
           </div>
 
-          {/* Description */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-            <p className="text-gray-600 leading-relaxed">
-              {product.description}
-            </p>
+            <p className="text-gray-600 leading-relaxed">{product.description}</p>
           </div>
 
-          {/* Product Details */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Details</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -216,7 +231,7 @@ const ProductDetail = () => {
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Category</dt>
-                <dd className="text-sm text-gray-900">{product.category}</dd>
+                <dd className="text-sm text-gray-900">{product.categoryId}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Listed by</dt>
@@ -229,7 +244,7 @@ const ProductDetail = () => {
             </dl>
           </div>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="border-t pt-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -239,7 +254,7 @@ const ProductDetail = () => {
                 <ShoppingCart size={20} />
                 <span>Add to Cart</span>
               </button>
-              
+
               <button
                 onClick={handleBuyNow}
                 className="flex-1 bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
@@ -248,20 +263,17 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            {/* Secondary Actions */}
             <div className="flex justify-center space-x-6">
-              <button 
+              <button
                 onClick={handleWishlistToggle}
                 className={`flex items-center space-x-2 transition-colors ${
-                  isProductInWishlist 
-                    ? 'text-red-500 hover:text-red-600' 
-                    : 'text-gray-600 hover:text-red-500'
+                  isProductInWishlist ? 'text-red-500 hover:text-red-600' : 'text-gray-600 hover:text-red-500'
                 }`}
               >
                 <Heart size={20} fill={isProductInWishlist ? 'currentColor' : 'none'} />
                 <span>{isProductInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
               </button>
-              
+
               <button
                 onClick={handleShare}
                 className="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors"
@@ -286,12 +298,29 @@ const ProductDetail = () => {
       </div>
 
       {/* Related Products Section */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
-        <div className="text-center py-8 text-gray-500">
-          <p>Related products feature coming soon...</p>
-        </div>
-      </div>
+     {/* Related Products Section */}
+{/* Related Products Section */}
+<div className="mt-16">
+  <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
+
+  {relatedProducts.length > 0 ? (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {relatedProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          showActions={false}   // hide edit/delete for related items
+        />
+      ))}
+    </div>
+  ) : (
+    <div className="text-center py-8 text-gray-500">
+      <p>No related products found.</p>
+    </div>
+  )}
+</div>
+
+
     </div>
   );
 };

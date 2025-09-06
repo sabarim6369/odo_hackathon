@@ -100,11 +100,9 @@ const Dashboard = () => {
       });
 
       if (uploadResult.success) {
-        // Update user profile with new image URL
         updateProfile({ profileImage: uploadResult.url });
         success('Image Uploaded', 'Your profile picture has been updated successfully!');
         
-        // Clear preview after successful upload since we'll use the profile image from store
         setTimeout(() => {
           setImagePreview(null);
         }, 500);
@@ -181,7 +179,7 @@ const Dashboard = () => {
                     }`}
                   >
                     <span className="text-white text-2xl font-bold">
-                      {user.username.charAt(0).toUpperCase()}
+                      {user.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   

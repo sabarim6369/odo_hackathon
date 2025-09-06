@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Search, Filter, Plus, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import LocationPrompt from '../components/LocationPrompt';
-import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
 
@@ -11,23 +11,40 @@ const ProductFeed = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  
-  const { 
-    getFilteredProducts, 
-    searchQuery, 
-    selectedCategory, 
-    setSearchQuery, 
-    setSelectedCategory,
-    getCategories 
-  } = useProductStore();
-  
+  const [products, setProducts] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState(['All']);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
   const { user } = useUserStore();
   const { location, permissionStatus, refreshLocationIfStale } = useLocationStore();
   const navigate = useNavigate();
 
-  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  const filteredProducts = getFilteredProducts();
-  const availableCategories = getCategories();
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+
+  // Fetch products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const token=localStorage.getItem('token')
+        const res = await axios.get('http://localhost:5000/products/allproducts',{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const fetchedProducts = res.data || [];
+        setProducts(fetchedProducts);
+
+        // Extract categories dynamically
+        const categories = ['All', ...new Set(fetchedProducts.map(p => p.category || 'Other'))];
+        setAvailableCategories(categories);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Debounced search
   useEffect(() => {
@@ -36,16 +53,14 @@ const ProductFeed = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [localSearchQuery, setSearchQuery]);
+  }, [localSearchQuery]);
 
   // Location detection
   useEffect(() => {
     const checkLocationStatus = async () => {
-      // Show location prompt if no location and permission not denied
       if (!location && permissionStatus !== 'denied') {
         setShowLocationPrompt(true);
       } else if (location) {
-        // Refresh location if stale
         try {
           await refreshLocationIfStale();
         } catch (error) {
@@ -65,6 +80,15 @@ const ProductFeed = () => {
     navigate('/add-product');
   };
 
+  // Apply filters
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === 'All' || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Apply sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price-low':
@@ -95,7 +119,7 @@ const ProductFeed = () => {
               Browse quality pre-owned items and contribute to a circular economy
             </p>
           </div>
-          
+
           <button
             onClick={handleAddProduct}
             className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
@@ -181,7 +205,7 @@ const ProductFeed = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Sort By
