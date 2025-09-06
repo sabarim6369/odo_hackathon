@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^5.2.1",
     "@tailwindcss/vite": "^4.1.13",
     "dexie": "^4.2.0",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
