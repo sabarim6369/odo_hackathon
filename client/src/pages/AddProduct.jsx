@@ -2,16 +2,21 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Upload, ArrowLeft, MapPin, RefreshCw } from 'lucide-react';
+import { Upload, ArrowLeft, MapPin, RefreshCw, X, CheckCircle, AlertCircle, ImagePlus } from 'lucide-react';
 import { productSchema, categories } from '../utils/validation';
+import { uploadMultipleImagesToCloudinary } from '../utils/cloudinary';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
 
 const AddProduct = () => {
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState(null);
+  const [cloudinaryUrls, setCloudinaryUrls] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   
   const { addProduct } = useProductStore();
   const { user } = useUserStore();
@@ -27,40 +32,106 @@ const AddProduct = () => {
   });
 
   const onSubmit = async (data) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newProduct = {
-      ...data,
-      price: parseFloat(data.price),
-      userId: user.id,
-      image: imagePreview || `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
-      // Add location data if available
-      ...(useCurrentLocation && location && {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        location: location.address?.formatted || 'Current Location'
-      }),
-      ...(manualLocation && !useCurrentLocation && {
-        location: manualLocation
-      })
-    };
-    
-    addProduct(newProduct);
-    
-    alert('Product added successfully!');
-    navigate('/');
+    try {
+      const newProduct = {
+        ...data,
+        userId: user.id,
+        image: cloudinaryUrls.length > 0 ? cloudinaryUrls[0] : `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`,
+        images: cloudinaryUrls.length > 0 ? cloudinaryUrls : [`https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}`],
+        // Add location data if available
+        ...(useCurrentLocation && location && {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          location: location.address?.formatted || 'Current Location'
+        }),
+        ...(manualLocation && !useCurrentLocation && {
+          location: manualLocation
+        })
+      };
+      
+      addProduct(newProduct);
+      
+      alert('Product added successfully!');
+      navigate('/');
+    } catch (error) {
+      console.error('Error adding product:', error);
+      alert('Failed to add product. Please try again.');
+    }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    try {
+      setImageUploading(true);
+      setImageUploadError(null);
+
+      // Create previews for all selected images
+      const previews = await Promise.all(
+        files.map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+      
+      // Add new previews to existing ones
+      setImagePreviews(prev => [...prev, ...previews]);
+
+      // Upload multiple images to Cloudinary
+      const uploadResult = await uploadMultipleImagesToCloudinary(files, {
+        folder: 'ecofinds/products',
+        publicId: `product_${Date.now()}`,
+      }, (current, total) => {
+        setUploadProgress({ current, total });
+      });
+
+      if (uploadResult.success && uploadResult.urls.length > 0) {
+        setCloudinaryUrls(prev => [...prev, ...uploadResult.urls]);
+        setImageUploadError(null);
+        
+        if (uploadResult.errors.length > 0) {
+          console.warn('Some images failed to upload:', uploadResult.errors);
+          setImageUploadError(`${uploadResult.totalUploaded}/${uploadResult.totalFiles} images uploaded successfully. Some uploads failed.`);
+        }
+      } else {
+        setImageUploadError(uploadResult.error || 'Failed to upload images');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setImageUploadError(error.message);
+    } finally {
+      setImageUploading(false);
+      setUploadProgress({ current: 0, total: 0 });
     }
+  };
+
+  const handleRemoveImage = (index) => {
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setCloudinaryUrls(prev => prev.filter((_, i) => i !== index));
+    
+    // If no images left, clear any errors
+    if (imagePreviews.length === 1) {
+      setImageUploadError(null);
+    }
+    
+    // Reset file input if no images left
+    if (imagePreviews.length === 1) {
+      const fileInput = document.getElementById('image-upload');
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
+  const handleRemoveAllImages = () => {
+    setImagePreviews([]);
+    setCloudinaryUrls([]);
+    setImageUploadError(null);
+    // Reset file input
+    const fileInput = document.getElementById('image-upload');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleGetCurrentLocation = async () => {
@@ -82,65 +153,171 @@ const AddProduct = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate('/')}
-        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-      >
-        <ArrowLeft size={20} />
-        <span>Back to Products</span>
-      </button>
-
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
-        <p className="text-gray-600 mt-2">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mb-4"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back to Home
+        </button>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Product</h1>
+        <p className="text-gray-600">
           List your pre-owned item and contribute to sustainable living
         </p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Product Image */}
+        {/* Multiple Product Images Section */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Product Image
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Product Images *
           </label>
-          <div className="flex flex-col items-center">
-            {imagePreview ? (
-              <div className="relative mb-4">
-                <img
-                  src={imagePreview}
-                  alt="Product preview"
-                  className="w-48 h-48 object-cover rounded-lg border"
-                />
+          
+          {/* Image Upload Area */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-green-400 transition-colors">
+            {/* Main Upload Button */}
+            <div className="text-center">
+              <div className="mx-auto h-16 w-16 text-gray-400 mb-4">
+                <ImagePlus size={64} />
+              </div>
+              <label htmlFor="image-upload" className="cursor-pointer">
+                <span className="mt-2 block text-sm font-medium text-gray-900">
+                  Upload product images
+                </span>
+                <span className="mt-1 block text-sm text-gray-500">
+                  Select multiple images (PNG, JPG, JPEG up to 10MB each)
+                </span>
+              </label>
+              
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                disabled={imageUploading}
+                className="hidden"
+              />
+              
+              <button
+                type="button"
+                onClick={() => document.getElementById('image-upload').click()}
+                disabled={imageUploading}
+                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {imageUploading ? (
+                  <>
+                    <RefreshCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="-ml-1 mr-2 h-4 w-4" />
+                    Choose Images
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Upload Progress */}
+          {imageUploading && uploadProgress.total > 0 && (
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Uploading images to Cloudinary...</span>
+                <span>{uploadProgress.current}/{uploadProgress.total}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Image Previews Grid */}
+          {imagePreviews.length > 0 && (
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium text-gray-700">
+                  Selected Images ({imagePreviews.length})
+                </h3>
                 <button
                   type="button"
-                  onClick={() => setImagePreview(null)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                  onClick={handleRemoveAllImages}
+                  className="text-sm text-red-600 hover:text-red-800 transition-colors"
                 >
-                  ×
+                  Remove All
                 </button>
               </div>
-            ) : (
-              <div className="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
-                <div className="text-center">
-                  <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Upload image</p>
-                </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                      <img
+                        src={preview}
+                        alt={`Product preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    
+                    {/* Remove Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow-md"
+                      title="Remove image"
+                    >
+                      <X size={14} />
+                    </button>
+                    
+                    {/* Upload Status Indicator */}
+                    {imageUploading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                        <RefreshCw className="animate-spin h-5 w-5 text-white" />
+                      </div>
+                    )}
+                    
+                    {/* Success Indicator */}
+                    {cloudinaryUrls[index] && !imageUploading && (
+                      <div className="absolute bottom-2 left-2 bg-green-500 text-white rounded-full p-1" title="Uploaded successfully">
+                        <CheckCircle size={16} />
+                      </div>
+                    )}
+                    
+                    {/* Image Number Badge */}
+                    <div className="absolute top-2 left-2 bg-gray-800 bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                      {index + 1}
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-            
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              For demo purposes, a placeholder image will be used if no image is uploaded
-            </p>
-          </div>
+            </div>
+          )}
+
+          {/* Upload Status Messages */}
+          {cloudinaryUrls.length > 0 && !imageUploading && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-600 flex items-center">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {cloudinaryUrls.length} image(s) uploaded successfully to Cloudinary
+              </p>
+            </div>
+          )}
+          
+          {imageUploadError && !imageUploading && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600 flex items-center">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                {imageUploadError}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Product Title */}
@@ -151,11 +328,31 @@ const AddProduct = () => {
           <input
             {...register('title')}
             type="text"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            id="title"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
             placeholder="Enter product title"
           />
           {errors.title && (
             <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+          )}
+        </div>
+
+        {/* Price */}
+        <div>
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+            Price (₹) *
+          </label>
+          <input
+            {...register('price')}
+            type="number"
+            id="price"
+            min="0"
+            step="0.01"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            placeholder="Enter price"
+          />
+          {errors.price && (
+            <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
           )}
         </div>
 
@@ -166,10 +363,11 @@ const AddProduct = () => {
           </label>
           <select
             {...register('category')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            id="category"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
           >
             <option value="">Select a category</option>
-            {categories.map(category => (
+            {categories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
@@ -180,97 +378,6 @@ const AddProduct = () => {
           )}
         </div>
 
-        {/* Price */}
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-            Price (₹) *
-          </label>
-          <input
-            {...register('price', { valueAsNumber: true })}
-            type="number"
-            step="0.01"
-            min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="0.00"
-          />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
-          )}
-        </div>
-
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Location (Optional)
-          </label>
-          
-          <div className="space-y-3">
-            {/* Current Location Option */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="currentLocation"
-                name="locationOption"
-                checked={useCurrentLocation}
-                onChange={() => handleLocationToggle(true)}
-                className="text-green-500 focus:ring-green-500"
-              />
-              <label htmlFor="currentLocation" className="text-sm text-gray-700 flex items-center space-x-2">
-                <MapPin size={16} />
-                <span>Use Current Location</span>
-              </label>
-              {!useCurrentLocation && (
-                <button
-                  type="button"
-                  onClick={handleGetCurrentLocation}
-                  disabled={isLoading}
-                  className="text-xs text-green-600 hover:text-green-700 underline flex items-center space-x-1"
-                >
-                  <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-                  <span>{isLoading ? 'Getting...' : 'Get Location'}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Show current location if available */}
-            {useCurrentLocation && location && (
-              <div className="ml-6 text-sm text-gray-600 bg-green-50 p-2 rounded">
-                📍 {location.address?.formatted || 'Current Location'}
-              </div>
-            )}
-
-            {/* Manual Location Option */}
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="manualLocation"
-                name="locationOption"
-                checked={!useCurrentLocation}
-                onChange={() => handleLocationToggle(false)}
-                className="text-green-500 focus:ring-green-500"
-              />
-              <label htmlFor="manualLocation" className="text-sm text-gray-700">
-                Enter Location Manually
-              </label>
-            </div>
-
-            {/* Manual Location Input */}
-            {!useCurrentLocation && (
-              <input
-                type="text"
-                value={manualLocation}
-                onChange={(e) => setManualLocation(e.target.value)}
-                placeholder="e.g., Mumbai, Maharashtra"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-            )}
-          </div>
-          
-          <p className="mt-1 text-xs text-gray-500">
-            Adding location helps buyers find products near them
-          </p>
-        </div>
-
         {/* Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
@@ -278,29 +385,110 @@ const AddProduct = () => {
           </label>
           <textarea
             {...register('description')}
+            id="description"
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="Describe your product, its condition, and any relevant details..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+            placeholder="Describe your product in detail..."
           />
           {errors.description && (
             <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
           )}
         </div>
 
-        {/* Tips */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="font-semibold text-green-900 mb-2">Tips for a great listing:</h3>
-          <ul className="text-sm text-green-800 space-y-1">
-            <li>• Use clear, well-lit photos from multiple angles</li>
-            <li>• Be honest about the item's condition</li>
-            <li>• Include dimensions and specifications</li>
-            <li>• Set a fair and competitive price</li>
-            <li>• Respond promptly to buyer inquiries</li>
-          </ul>
+        {/* Location Section */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Location
+          </label>
+          
+          {/* Location Toggle */}
+          <div className="flex space-x-4 mb-4">
+            <button
+              type="button"
+              onClick={() => handleLocationToggle(true)}
+              className={`flex items-center px-4 py-2 rounded-md border transition-colors ${
+                useCurrentLocation
+                  ? 'bg-green-50 border-green-300 text-green-700'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              disabled={isLoading}
+            >
+              <MapPin size={16} className="mr-2" />
+              {isLoading ? (
+                <>
+                  <RefreshCw className="animate-spin h-4 w-4 mr-2" />
+                  Getting location...
+                </>
+              ) : (
+                'Use Current Location'
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLocationToggle(false)}
+              className={`px-4 py-2 rounded-md border transition-colors ${
+                !useCurrentLocation
+                  ? 'bg-green-50 border-green-300 text-green-700'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Enter Manually
+            </button>
+          </div>
+
+          {/* Current Location Display */}
+          {useCurrentLocation && location && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-start">
+                <MapPin className="h-5 w-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">Current Location</p>
+                  <p className="text-sm text-green-600">
+                    {location.address?.formatted || `${location.latitude}, ${location.longitude}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Location Input */}
+          {!useCurrentLocation && (
+            <div>
+              <input
+                type="text"
+                value={manualLocation}
+                onChange={(e) => setManualLocation(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter your location (e.g., City, State)"
+              />
+            </div>
+          )}
+
+          {/* Get Current Location Button */}
+          {useCurrentLocation && !location && (
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              disabled={isLoading}
+              className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="animate-spin h-4 w-4 mr-2" />
+                  Getting location...
+                </>
+              ) : (
+                <>
+                  <MapPin size={16} className="mr-2" />
+                  Get Current Location
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-6">
+        {/* Submit Button */}
+        <div className="flex space-x-4 pt-4">
           <button
             type="button"
             onClick={() => navigate('/')}
@@ -310,10 +498,19 @@ const AddProduct = () => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmitting || imageUploading || cloudinaryUrls.length === 0}
+            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {isSubmitting ? 'Adding Product...' : 'Add Product'}
+            {imageUploading ? (
+              <>
+                <RefreshCw className="animate-spin h-4 w-4 mr-2" />
+                Uploading Images...
+              </>
+            ) : isSubmitting ? (
+              'Adding Product...'
+            ) : (
+              'Add Product'
+            )}
           </button>
         </div>
       </form>

@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { ShoppingCart, ArrowLeft, Heart, Share2 } from 'lucide-react';
 import { formatPrice } from '../utils/helpers';
 import useProductStore from '../stores/productStore';
@@ -15,6 +16,16 @@ const ProductDetail = () => {
   const { addPurchase } = usePurchaseStore();
 
   const product = getProductById(id);
+  
+  // State for image gallery
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  
+  // Get product images array, fallback to single image
+  const productImages = product?.images && product.images.length > 0 
+    ? product.images 
+    : product?.image 
+      ? [product.image] 
+      : [];
 
   if (!product) {
     return (
@@ -85,31 +96,45 @@ const ProductDetail = () => {
 
       {/* Product Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Product Image */}
+        {/* Product Image Gallery */}
         <div className="space-y-4">
           <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
             <img
-              src={product.image}
+              src={productImages[selectedImageIndex] || product.image}
               alt={product.title}
               className="w-full h-full object-cover"
             />
           </div>
           
-          {/* Thumbnail gallery placeholder */}
-          <div className="grid grid-cols-4 gap-2">
-            {[...Array(4)].map((_, index) => (
-              <div
-                key={index}
-                className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-transparent hover:border-green-500 cursor-pointer transition-colors"
-              >
-                <img
-                  src={product.image}
-                  alt={`${product.title} view ${index + 1}`}
-                  className="w-full h-full object-cover opacity-70"
-                />
-              </div>
-            ))}
-          </div>
+          {/* Thumbnail gallery */}
+          {productImages.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {productImages.map((image, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 cursor-pointer transition-colors ${
+                    selectedImageIndex === index 
+                      ? 'border-green-500' 
+                      : 'border-transparent hover:border-green-300'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${product.title} view ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Image Counter */}
+          {productImages.length > 1 && (
+            <div className="text-center text-sm text-gray-500">
+              {selectedImageIndex + 1} of {productImages.length} images
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
