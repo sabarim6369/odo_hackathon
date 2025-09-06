@@ -62,10 +62,18 @@ const ProductCard = ({ product, showActions = false, onEdit, onDelete }) => {
         {/* Product Image */}
         <div className="relative overflow-hidden">
           <img 
-            src={product.image} 
+            src={product.images && product.images.length > 0 ? product.images[0] : product.image} 
             alt={product.title}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
+          
+          {/* Multiple Images Indicator */}
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+              +{product.images.length - 1} more
+            </div>
+          )}
+          
           <div className="absolute top-2 right-2">
             <button 
               onClick={handleWishlistToggle}

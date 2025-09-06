@@ -92,6 +92,17 @@ const useProductStore = create(
                 `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(
                   product.title
                 )}`,
+              // Handle multiple images - ensure it's always an array
+              images:
+                product.images && Array.isArray(product.images)
+                  ? product.images
+                  : product.image
+                  ? [product.image]
+                  : [
+                      `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(
+                        product.title
+                      )}`,
+                    ],
             },
           ],
         })),

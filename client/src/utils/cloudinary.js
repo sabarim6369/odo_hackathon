@@ -93,6 +93,81 @@ export const uploadImageToCloudinary = async (file, options = {}) => {
 };
 
 /**
+ * Upload multiple images to Cloudinary
+ * @param {FileList|Array} files - Array of image files to upload
+ * @param {Object} options - Additional upload options
+ * @param {Function} onProgress - Progress callback (current, total)
+ * @returns {Promise<Object>} - Upload results with array of image URLs
+ */
+export const uploadMultipleImagesToCloudinary = async (
+  files,
+  options = {},
+  onProgress = null
+) => {
+  try {
+    if (!files || files.length === 0) {
+      throw new Error("No files provided");
+    }
+
+    const fileArray = Array.from(files);
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+
+      // Call progress callback
+      if (onProgress) {
+        onProgress(i + 1, fileArray.length);
+      }
+
+      try {
+        // Compress image before upload
+        const compressedFile = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.8,
+        });
+
+        // Upload to Cloudinary with unique public ID
+        const uploadResult = await uploadImageToCloudinary(compressedFile, {
+          ...options,
+          publicId: `${options.publicId || "product"}_${Date.now()}_${i}`,
+        });
+
+        if (uploadResult.success) {
+          results.push(uploadResult);
+        } else {
+          errors.push({ file: file.name, error: uploadResult.error });
+        }
+      } catch (error) {
+        errors.push({ file: file.name, error: error.message });
+      }
+    }
+
+    return {
+      success: results.length > 0,
+      results,
+      errors,
+      totalUploaded: results.length,
+      totalFiles: fileArray.length,
+      urls: results.map((result) => result.url),
+    };
+  } catch (error) {
+    console.error("Multiple upload error:", error);
+    return {
+      success: false,
+      error: error.message,
+      results: [],
+      errors: [],
+      totalUploaded: 0,
+      totalFiles: 0,
+      urls: [],
+    };
+  }
+};
+
+/**
  * Generate Cloudinary URL with transformations
  * @param {string} publicId - The public ID of the image
  * @param {Object} transformations - Transformation options
