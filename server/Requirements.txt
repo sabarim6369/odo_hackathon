@@ -1,0 +1,13 @@
+npm i express
+npm i bcryptjs
+npm i jsonwebtoken
+npm i @prisma/client
+npm i dotenv
+npm i body-parser
+npm i cors
+npm i nodemon --save-dev
+npm i prisma --save-dev
+npx prisma init
+npx prisma migrate dev --name init
+npx prisma generate
+
