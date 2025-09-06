@@ -10,6 +10,7 @@ import MyListings from './pages/MyListings';
 import Cart from './pages/Cart';
 import PurchaseHistory from './pages/PurchaseHistory';
 import PaymentHistory from './pages/PaymentHistory';
+import Wishlist from './pages/Wishlist';
 import useUserStore from './stores/userStore';
 
 // Protected Route Component
@@ -48,6 +49,11 @@ function App() {
           <Route path="cart" element={
             <ProtectedRoute>
               <Cart />
+            </ProtectedRoute>
+          } />
+          <Route path="wishlist" element={
+            <ProtectedRoute>
+              <Wishlist />
             </ProtectedRoute>
           } />
           <Route path="purchases" element={
