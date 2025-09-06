@@ -82,16 +82,19 @@ const ProductFeed = () => {
     navigate('/add-product');
   };
 
-  // Apply filters
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'All' ||
-      product.category?.name === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+ // Apply filters
+const filteredProducts = products.filter(product => {
+  const matchesSearch = product.title
+    .toLowerCase()
+    .includes(searchQuery.toLowerCase());
+
+  const matchesCategory =
+    selectedCategory === 'All' ||
+    product.categoryId === categories.find(c => c.name === selectedCategory)?.id;
+
+  return matchesSearch && matchesCategory;
+});
+
 
   // Apply sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {

@@ -15,8 +15,10 @@ const register = async (req, res) => {
     const user = await prisma.user.create({
       data: { name, email, password: hashed }
     });
+    const token= jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "1d" });
+
     console.log(user);
-    res.status(201).json({ message: "User registered", user });
+    res.status(201).json({ message: "User registered", user,token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
