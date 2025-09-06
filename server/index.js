@@ -1,10 +1,15 @@
-const express=require('express');
-const router=express.Router();
+const express = require('express');
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const purchaseRoutes = require('./routes/purchaseRoutes');
 
-const userrouter=require('./routers/userrouter');
-
-const app=express();
+const app = express();
 app.use(express.json());
-app.use('/api/users',userrouter);
-const PORT=process.env.PORT || 5000;
-app.listen(PORT,()=>console.log(`Server started on port ${PORT}`));
+
+app.use('/auth', authRoutes);
+app.use('/products', productRoutes);
+app.use('/cart', cartRoutes);
+app.use('/purchases', purchaseRoutes);
+
+app.listen(5000, () => console.log("Server running on http://localhost:5000"));
