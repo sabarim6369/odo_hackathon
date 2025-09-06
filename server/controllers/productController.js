@@ -50,8 +50,9 @@ const getProducts = async (req, res) => {
 const getAllProducts = async (req, res) => {
   try {
     const products = await prisma.product.findMany({
-      include: { images: true, attributes: true, category: true }
+      include: { images: true, attributes: true }
     });
+    console.log(products)
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -62,7 +63,7 @@ const getProductById = async (req, res) => {
   try {
     const product = await prisma.product.findUnique({
       where: { id: parseInt(req.params.id) },
-      include: { images: true, attributes: true, category: true }
+      include: { images: true, attributes: true}
     });
     res.json(product);
   } catch (err) {
