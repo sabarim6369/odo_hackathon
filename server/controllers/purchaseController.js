@@ -42,7 +42,6 @@ const checkout = async (req, res) => {
     }));
 
     const totalPrice = itemsForEmail.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
     const emailData = {
       type: "purchase", // add a type to distinguish email templates
       buyerEmail: buyer.email,
