@@ -1,0 +1,3 @@
+Alembic migration directory for chatbot app.
+
+Use `alembic revision --autogenerate -m "init"` then `alembic upgrade head` to create migrations.
