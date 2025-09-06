@@ -1,0 +1,18 @@
+{
+  "name": "messagequeues",
+  "version": "1.0.0",
+  "main": "emailWorker.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "express": "^5.1.0",
+    "nodemailer": "^7.0.6",
+    "nodemon": "^3.1.10"
+  }
+}

@@ -13,7 +13,6 @@ import PaymentHistory from './pages/PaymentHistory';
 import Wishlist from './pages/Wishlist';
 import useUserStore from './stores/userStore';
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user } = useUserStore();
   return user.isLoggedIn ? children : <Navigate to="/login" replace />;
