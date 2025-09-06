@@ -8,6 +8,7 @@ import { uploadMultipleImagesToCloudinary } from '../utils/cloudinary';
 import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useLocationStore from '../stores/locationStore';
+import useToast from '../hooks/useToast';
 
 const AddProduct = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -21,6 +22,7 @@ const AddProduct = () => {
   const { addProduct } = useProductStore();
   const { user } = useUserStore();
   const { location, isLoading, getCurrentLocation } = useLocationStore();
+  const { success, error } = useToast();
   const navigate = useNavigate();
 
   const {
@@ -51,11 +53,11 @@ const AddProduct = () => {
       
       addProduct(newProduct);
       
-      alert('Product added successfully!');
+      success('Product Added!', 'Your product has been successfully listed and is now available for sale.');
       navigate('/');
-    } catch (error) {
-      console.error('Error adding product:', error);
-      alert('Failed to add product. Please try again.');
+    } catch (err) {
+      console.error('Error adding product:', err);
+      error('Failed to Add Product', 'Something went wrong while listing your product. Please try again.');
     }
   };
 

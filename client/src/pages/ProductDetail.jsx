@@ -6,6 +6,8 @@ import useProductStore from '../stores/productStore';
 import useUserStore from '../stores/userStore';
 import useCartStore from '../stores/cartStore';
 import usePurchaseStore from '../stores/purchaseStore';
+import useWishlistStore from '../stores/wishlistStore';
+import useToast from '../hooks/useToast';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -14,6 +16,8 @@ const ProductDetail = () => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
   const { addPurchase } = usePurchaseStore();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+  const { success, error, warning } = useToast();
 
   const product = getProductById(id);
   
@@ -26,6 +30,8 @@ const ProductDetail = () => {
     : product?.image 
       ? [product.image] 
       : [];
+
+  const isProductInWishlist = product ? isInWishlist(product.id) : false;
 
   if (!product) {
     return (
@@ -46,27 +52,56 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!user.isLoggedIn) {
+      warning('Login Required', 'Please login to add items to your cart.');
       navigate('/login', { state: { from: window.location.pathname } });
       return;
     }
     
-    addToCart(product);
-    // Show success message or redirect to cart
-    alert('Product added to cart!');
+    try {
+      addToCart(product);
+      success('Added to Cart', `${product.title} has been added to your cart!`);
+    } catch {
+      error('Failed to Add', 'Could not add item to cart. Please try again.');
+    }
   };
 
   const handleBuyNow = () => {
     if (!user.isLoggedIn) {
+      warning('Login Required', 'Please login to make a purchase.');
       navigate('/login', { state: { from: window.location.pathname } });
       return;
     }
     
-    // Mock payment process
-    const cartItems = [product];
-    addPurchase(cartItems);
-    
-    alert('Purchase successful! Check your purchase history.');
-    navigate('/purchases');
+    try {
+      // Mock payment process
+      const cartItems = [product];
+      addPurchase(cartItems);
+      
+      success('Purchase Successful!', 'Your order has been placed. Check your purchase history.');
+      navigate('/purchases');
+    } catch {
+      error('Purchase Failed', 'Could not complete your purchase. Please try again.');
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    if (!user.isLoggedIn) {
+      warning('Login Required', 'Please login to manage your wishlist.');
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
+
+    try {
+      if (isProductInWishlist) {
+        removeFromWishlist(product.id);
+        warning('Removed from Wishlist', `${product.title} has been removed from your wishlist.`);
+      } else {
+        addToWishlist(product);
+        success('Added to Wishlist', `${product.title} has been added to your wishlist!`);
+      }
+    } catch {
+      error('Action Failed', 'Could not update your wishlist. Please try again.');
+    }
   };
 
   const handleShare = () => {
@@ -75,11 +110,18 @@ const ProductDetail = () => {
         title: product.title,
         text: product.description,
         url: window.location.href,
+      }).then(() => {
+        success('Shared Successfully', 'Product has been shared!');
+      }).catch(() => {
+        error('Share Failed', 'Could not share this product. Please try again.');
       });
     } else {
       // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert('Product link copied to clipboard!');
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        success('Link Copied', 'Product link has been copied to your clipboard!');
+      }).catch(() => {
+        error('Copy Failed', 'Could not copy link. Please try again.');
+      });
     }
   };
 
@@ -208,9 +250,16 @@ const ProductDetail = () => {
 
             {/* Secondary Actions */}
             <div className="flex justify-center space-x-6">
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors">
-                <Heart size={20} />
-                <span>Add to Wishlist</span>
+              <button 
+                onClick={handleWishlistToggle}
+                className={`flex items-center space-x-2 transition-colors ${
+                  isProductInWishlist 
+                    ? 'text-red-500 hover:text-red-600' 
+                    : 'text-gray-600 hover:text-red-500'
+                }`}
+              >
+                <Heart size={20} fill={isProductInWishlist ? 'currentColor' : 'none'} />
+                <span>{isProductInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
               </button>
               
               <button

@@ -4,20 +4,37 @@ import ProductCard from '../components/ProductCard';
 import { formatPrice } from '../utils/helpers';
 import useWishlistStore from '../stores/wishlistStore';
 import useCartStore from '../stores/cartStore';
+import useToast from '../hooks/useToast';
 
 const Wishlist = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlistStore();
   const { addToCart } = useCartStore();
+  const { success, error, warning } = useToast();
   const navigate = useNavigate();
 
   const handleAddToCart = (product) => {
-    addToCart(product);
-    // Optional: Remove from wishlist after adding to cart
-    // removeFromWishlist(product.id);
+    try {
+      addToCart(product);
+      success('Added to Cart', `${product.title} has been added to your cart!`);
+      // Optional: Remove from wishlist after adding to cart
+      // removeFromWishlist(product.id);
+    } catch {
+      error('Failed to Add', 'Could not add item to cart. Please try again.');
+    }
   };
 
   const handleRemoveFromWishlist = (productId) => {
-    removeFromWishlist(productId);
+    const product = wishlistItems.find(item => item.id === productId);
+    if (product) {
+      removeFromWishlist(productId);
+      warning('Removed from Wishlist', `${product.title} has been removed from your wishlist.`);
+    }
+  };
+
+  const handleClearWishlist = () => {
+    const itemCount = wishlistItems.length;
+    clearWishlist();
+    warning('Wishlist Cleared', `All ${itemCount} items have been removed from your wishlist.`);
   };
 
   const totalValue = wishlistItems.reduce((sum, item) => sum + item.price, 0);
@@ -68,7 +85,18 @@ const Wishlist = () => {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Wishlist</h1>
+                    <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">My Wishlist</h1>
+          {wishlistItems.length > 0 && (
+            <button
+              onClick={handleClearWishlist}
+              className="px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <Trash2 size={16} />
+              <span>Clear All</span>
+            </button>
+          )}
+        </div>
             <p className="text-gray-600 mt-2">
               {wishlistItems.length} item{wishlistItems.length !== 1 ? 's' : ''} saved for later
             </p>
