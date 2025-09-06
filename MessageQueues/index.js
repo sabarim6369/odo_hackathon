@@ -2,7 +2,7 @@ const amqp = require('amqplib');
 const nodemailer = require('nodemailer');
 
 async function startWorker() {
-  const connection = await amqp.connect('amqp://localhost');
+  const connection = await amqp.connect('amqps://kssuhgsu:eQ6vQE9wyzT3lU3QVz4KKyVoRGx4UZrP@jaragua.lmq.cloudamqp.com/kssuhgsu');
   const channel = await connection.createChannel();
 
   const queue = 'emailQueue';
