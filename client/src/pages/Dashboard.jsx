@@ -376,7 +376,7 @@ const Dashboard = () => {
                 className="flex flex-col items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
               >
                 <Package className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm font-medium text-gray-700">Add Product</span>
+                <span className="text-sm font-medium text-gray-700">Sell Product</span>
               </Link>
 
               <Link

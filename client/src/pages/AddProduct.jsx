@@ -57,7 +57,7 @@ const AddProduct = () => {
       navigate('/');
     } catch (err) {
       console.error('Error adding product:', err);
-      error('Failed to Add Product', 'Something went wrong while listing your product. Please try again.');
+      error('Failed to Sell Product', 'Something went wrong while listing your product. Please try again.');
     }
   };
 
@@ -164,7 +164,7 @@ const AddProduct = () => {
           <ArrowLeft size={20} className="mr-2" />
           Back to Home
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Sell New Product</h1>
         <p className="text-gray-600">
           List your pre-owned item and contribute to sustainable living
         </p>
@@ -509,9 +509,9 @@ const AddProduct = () => {
                 Uploading Images...
               </>
             ) : isSubmitting ? (
-              'Adding Product...'
+              'Listing Product...'
             ) : (
-              'Add Product'
+              'Sell Product'
             )}
           </button>
         </div>

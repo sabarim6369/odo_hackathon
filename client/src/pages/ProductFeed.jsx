@@ -101,7 +101,7 @@ const ProductFeed = () => {
             className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
           >
             <Plus size={20} />
-            <span>Add Product</span>
+            <span>Sell Product</span>
           </button>
         </div>
       </div>

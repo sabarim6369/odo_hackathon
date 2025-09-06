@@ -70,7 +70,7 @@ const Header = () => {
                   className="flex items-center space-x-1 text-gray-700 hover:text-green-600 transition-colors"
                 >
                   <Plus size={16} />
-                  <span>Add Product</span>
+                  <span>Sell Product</span>
                 </Link>
                 <Link 
                   to="/my-listings" 
@@ -161,7 +161,7 @@ const Header = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Plus size={16} />
-                    <span>Add Product</span>
+                    <span>Sell Product</span>
                   </Link>
                   <Link 
                     to="/my-listings" 
