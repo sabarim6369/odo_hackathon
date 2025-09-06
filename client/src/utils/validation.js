@@ -38,8 +38,8 @@ export const profileSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 export const categories = [
-  { id: 1, name: "Electronics" },
-  { id: 2, name: "Clothing" },
+  { id: 2, name: "Electronics" },
+  { id: 1, name: "Clothing" },
   { id: 3, name: "Furniture" },
   { id: 4, name: "Books" },
   { id: 5, name: "Sports" },

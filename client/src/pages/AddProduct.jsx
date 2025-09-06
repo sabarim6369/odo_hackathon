@@ -34,37 +34,51 @@ const AddProduct = () => {
     resolver: zodResolver(productSchema)
   });
 
- const onSubmit = async (data) => {
+const onSubmit = async (data) => {
   try {
-    const newProduct = {
-      ...data,
-      userId: user.id, // current logged-in user
+    const payload = {
+      title: data.title,
+      description: data.description,
+      price: Number(data.price),
+      quantity: Number(data.quantity),
+      categoryId: Number(data.categoryId),
+      category: data.category,
       images: cloudinaryUrls.length > 0
         ? cloudinaryUrls.map(url => ({ url }))
         : [{ url: `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(data.title)}` }],
-      // Location handling
+
+      userId: user.id,
+
+      // Add location data if available
       ...(useCurrentLocation && location && {
         latitude: location.latitude,
         longitude: location.longitude,
         location: location.address?.formatted || 'Current Location'
       }),
+
       ...(manualLocation && !useCurrentLocation && {
         location: manualLocation
-      }),
+      })
     };
 
-    // Send to backend
-    const response = await axios.post('http://localhost:5000/products', newProduct, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Now just use payload directly
+    addProduct(payload);
 
-    success('Product Added!', 'Your product has been successfully listed and is now available for sale.');
-    navigate('/'); // redirect after success
+    success(
+      'Product Added!',
+      'Your product has been successfully listed and is now available for sale.'
+    );
+    navigate('/');
   } catch (err) {
-    console.error('Error adding product:', err.response?.data || err.message);
-    error('Failed to Add Product', 'Something went wrong while listing your product. Please try again.');
+    console.error('Error adding product:', err);
+    error(
+      'Failed to Add Product',
+      'Something went wrong while listing your product. Please try again.'
+    );
   }
 };
+
+
 
 
   const handleImageUpload = async (e) => {
