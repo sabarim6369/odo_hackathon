@@ -13,7 +13,7 @@ const mockProducts = [
       "https://via.placeholder.com/300x300/4ade80/ffffff?text=Leather+Jacket",
     userId: 1,
     latitude: 28.6139, // New Delhi
-    longitude: 77.2090,
+    longitude: 77.209,
     location: "New Delhi, India",
   },
   {
@@ -25,7 +25,7 @@ const mockProducts = [
       "MacBook Pro 13-inch from 2019, great for work and creative projects. Minor wear on corners.",
     image: "https://via.placeholder.com/300x300/3b82f6/ffffff?text=MacBook+Pro",
     userId: 2,
-    latitude: 19.0760, // Mumbai
+    latitude: 19.076, // Mumbai
     longitude: 72.8777,
     location: "Mumbai, India",
   },
@@ -86,9 +86,12 @@ const useProductStore = create(
             {
               ...product,
               id: Date.now(),
-              image: `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(
-                product.title
-              )}`,
+              // Use the provided image URL, or fallback to placeholder if none provided
+              image:
+                product.image ||
+                `https://via.placeholder.com/300x300/4ade80/ffffff?text=${encodeURIComponent(
+                  product.title
+                )}`,
             },
           ],
         })),

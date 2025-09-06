@@ -22,15 +22,11 @@ const useLocationStore = create(
 
           // Request location with high accuracy
           const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-              resolve,
-              reject,
-              {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000, // 5 minutes cache
-              }
-            );
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 300000, // 5 minutes cache
+            });
           });
 
           const locationData = {
@@ -62,7 +58,7 @@ const useLocationStore = create(
           return fullLocation;
         } catch (error) {
           let errorMessage = "Failed to get location";
-          
+
           switch (error.code) {
             case 1: // PERMISSION_DENIED
               errorMessage = "Location access denied by user";
@@ -144,20 +140,24 @@ const useLocationStore = create(
           const response = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
           );
-          
+
           if (!response.ok) {
             throw new Error("Geocoding service unavailable");
           }
 
           const data = await response.json();
-          
+
           return {
             city: data.city || data.locality || "Unknown City",
             state: data.principalSubdivision || "Unknown State",
             country: data.countryName || "Unknown Country",
             countryCode: data.countryCode || "",
             postalCode: data.postcode || "",
-            formatted: `${data.city || data.locality || "Unknown"}, ${data.principalSubdivision || ""}, ${data.countryName || ""}`.replace(/, ,/g, ",").replace(/^,|,$/g, ""),
+            formatted: `${data.city || data.locality || "Unknown"}, ${
+              data.principalSubdivision || ""
+            }, ${data.countryName || ""}`
+              .replace(/, ,/g, ",")
+              .replace(/^,|,$/g, ""),
           };
         } catch (error) {
           console.error("Reverse geocoding failed:", error);
@@ -191,7 +191,7 @@ const useLocationStore = create(
       getDistanceToLocation: (targetLat, targetLon) => {
         const { location } = get();
         if (!location) return null;
-        
+
         return get().calculateDistance(
           location.latitude,
           location.longitude,
@@ -214,7 +214,7 @@ const useLocationStore = create(
       isLocationStale: () => {
         const { location } = get();
         if (!location || !location.lastUpdated) return true;
-        
+
         const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
         return new Date(location.lastUpdated).getTime() < thirtyMinutesAgo;
       },
