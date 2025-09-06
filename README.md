@@ -1,4 +1,4 @@
-﻿# 🌿 EcoFinds - Sustainable Second-Hand Marketplace
+# 🌿 EcoFinds - Sustainable Second-Hand Marketplace
 
 
 ## 📖 Overview
