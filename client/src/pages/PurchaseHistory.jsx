@@ -70,7 +70,7 @@ const PurchaseHistory = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">$</span>
+              <span className="text-blue-600 font-semibold">₹</span>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Total Spent</p>
