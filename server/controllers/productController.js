@@ -3,7 +3,7 @@ const redis=require('../Redis/redis');
 
 const createProduct = async (req, res) => {
   try {
-    const { title, description, price, categoryId, images, attributes } = req.body;
+const { title, description, price, categoryId, images, attributes, quantity } = req.body;
     const userId = req.userId;
 
     const product = await prisma.product.create({
@@ -11,6 +11,7 @@ const createProduct = async (req, res) => {
         title,
         description,
         price: parseFloat(price),
+        quantity: parseInt(quantity),
         categoryId,
         ownerId: userId,
         images: { create: images.map(img => ({ url: img.url })) },
@@ -42,6 +43,16 @@ const getProducts = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: { images: true, attributes: true, category: true }
+    });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 const getProductById = async (req, res) => {
   try {
@@ -57,7 +68,7 @@ const getProductById = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    const { title, description, price, categoryId, images, attributes } = req.body;
+const { title, description, price, categoryId, images, attributes, quantity } = req.body;
     const productId = parseInt(req.params.id);
 
     const product = await prisma.product.update({
@@ -66,6 +77,7 @@ const updateProduct = async (req, res) => {
         title,
         description,
         price: parseFloat(price),
+        quantity: parseInt(quantity),
         categoryId,
         images: { deleteMany: {}, create: images.map(img => ({ url: img.url })) },
         attributes: { deleteMany: {}, create: attributes.map(attr => ({ key: attr.key, value: attr.value })) }
@@ -88,4 +100,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct };
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getAllProducts };
