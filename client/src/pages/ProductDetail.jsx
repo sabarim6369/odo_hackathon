@@ -8,6 +8,7 @@ import useCartStore from '../stores/cartStore';
 import usePurchaseStore from '../stores/purchaseStore';
 import useWishlistStore from '../stores/wishlistStore';
 import useToast from '../hooks/useToast';
+import ProductCard from '../components/ProductCard';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -21,27 +22,43 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        const res = await axios.get(`http://localhost:5000/products/prod/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setProduct(res.data);
-      } catch (err) {
-        console.error('Error fetching product:', err);
-        error('Failed to fetch product', 'Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchProduct();
-  }, [id]);
+useEffect(() => {
+  const fetchProduct = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await axios.get(`http://localhost:5000/products/prod/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProduct(res.data);
+
+      // fetch related products once product is fetched
+      const relatedRes = await axios.post(
+        "http://localhost:5000/products/prod/related",
+        {
+          categoryId: res.data.categoryId,
+          productId: res.data.id
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setRelatedProducts(relatedRes.data);
+
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      error('Failed to fetch product', 'Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProduct();
+}, [id]);
+
+  
 
   if (loading) {
     return (
@@ -214,7 +231,7 @@ const ProductDetail = () => {
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Category</dt>
-                <dd className="text-sm text-gray-900">{product.category}</dd>
+                <dd className="text-sm text-gray-900">{product.categoryId}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Listed by</dt>
@@ -281,12 +298,29 @@ const ProductDetail = () => {
       </div>
 
       {/* Related Products Section */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
-        <div className="text-center py-8 text-gray-500">
-          <p>Related products feature coming soon...</p>
-        </div>
-      </div>
+     {/* Related Products Section */}
+{/* Related Products Section */}
+<div className="mt-16">
+  <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
+
+  {relatedProducts.length > 0 ? (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {relatedProducts.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          showActions={false}   // hide edit/delete for related items
+        />
+      ))}
+    </div>
+  ) : (
+    <div className="text-center py-8 text-gray-500">
+      <p>No related products found.</p>
+    </div>
+  )}
+</div>
+
+
     </div>
   );
 };

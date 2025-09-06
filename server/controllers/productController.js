@@ -6,7 +6,7 @@ const createProduct = async (req, res) => {
 let { title, description, price, categoryId,category, images, attributes, quantity } = req.body;
     const userId = req.userId;
    
-  categoryId=1
+//   categoryId=1
     quantity=10;
 
     const product = await prisma.product.create({
@@ -58,6 +58,34 @@ const getAllProducts = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const getRelatedProductsByCategoryName = async (req, res) => {
+  const { categoryId, productId } = req.body; // get data from request body
+
+  if (!categoryId || !productId) {
+    return res.status(400).json({ error: 'categoryName and productId are required' });
+  }
+
+  try {
+    const products = await prisma.product.findMany({
+      where: {
+        categoryId: categoryId,          // match by category name
+        // id: { not: Number(productId) },  // exclude current product
+      },
+      include: {
+        images: true,
+        // attributes: true,
+      },
+      take: 4, // optional: limit for UI
+    });
+
+    res.json(products);
+  } catch (err) {
+    console.error('Error fetching related products by name:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 const getProductById = async (req, res) => {
   try {
@@ -105,4 +133,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getAllProducts };
+module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct, getAllProducts,getRelatedProductsByCategoryName };
