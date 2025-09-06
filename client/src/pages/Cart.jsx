@@ -3,26 +3,44 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { formatPrice } from '../utils/helpers';
 import useCartStore from '../stores/cartStore';
 import usePurchaseStore from '../stores/purchaseStore';
+import useToast from '../hooks/useToast';
 
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCartStore();
   const { addPurchase } = usePurchaseStore();
+  const { success, warning } = useToast();
   const navigate = useNavigate();
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity <= 0) {
+      const product = cartItems.find(item => item.id === productId);
       removeFromCart(productId);
+      if (product) {
+        warning('Item Removed', `${product.title} has been removed from your cart.`);
+      }
     } else {
       updateQuantity(productId, newQuantity);
     }
   };
 
+  const handleRemoveItem = (product) => {
+    removeFromCart(product.id);
+    warning('Item Removed', `${product.title} has been removed from your cart.`);
+  };
+
+  const handleClearCart = () => {
+    const itemCount = cartItems.length;
+    clearCart();
+    warning('Cart Cleared', `All ${itemCount} item${itemCount !== 1 ? 's' : ''} have been removed from your cart.`);
+  };
+
   const handleCheckout = () => {
     // Mock checkout process
+    const itemCount = cartItems.length;
     addPurchase(cartItems);
     clearCart();
     
-    alert('Order placed successfully! Check your purchase history.');
+    success('Order Placed!', `Successfully ordered ${itemCount} item${itemCount !== 1 ? 's' : ''}. Check your purchase history.`);
     navigate('/purchases');
   };
 
@@ -120,7 +138,7 @@ const Cart = () => {
                   </div>
 
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => handleRemoveItem(item)}
                     className="flex items-center space-x-1 text-red-600 hover:text-red-700 transition-colors"
                   >
                     <Trash2 size={16} />
@@ -134,7 +152,7 @@ const Cart = () => {
           {/* Clear Cart Button */}
           <div className="flex justify-end">
             <button
-              onClick={clearCart}
+              onClick={handleClearCart}
               className="text-red-600 hover:text-red-700 transition-colors text-sm"
             >
               Clear entire cart

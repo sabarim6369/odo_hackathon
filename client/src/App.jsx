@@ -11,7 +11,9 @@ import Cart from './pages/Cart';
 import PurchaseHistory from './pages/PurchaseHistory';
 import PaymentHistory from './pages/PaymentHistory';
 import Wishlist from './pages/Wishlist';
+import { ToastContainer } from './components/toast';
 import useUserStore from './stores/userStore';
+import useToastStore from './stores/toastStore';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useUserStore();
@@ -19,58 +21,65 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  const { toasts, removeToast } = useToastStore();
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          {/* Public Routes */}
-          <Route index element={<ProductFeed />} />
-          <Route path="product/:id" element={<ProductDetail />} />
-          <Route path="login" element={<Login />} />
-          <Route path="signup" element={<Signup />} />
-          
-          {/* Protected Routes */}
-          <Route path="dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="add-product" element={
-            <ProtectedRoute>
-              <AddProduct />
-            </ProtectedRoute>
-          } />
-          <Route path="my-listings" element={
-            <ProtectedRoute>
-              <MyListings />
-            </ProtectedRoute>
-          } />
-          <Route path="cart" element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          } />
-          <Route path="wishlist" element={
-            <ProtectedRoute>
-              <Wishlist />
-            </ProtectedRoute>
-          } />
-          <Route path="purchases" element={
-            <ProtectedRoute>
-              <PurchaseHistory />
-            </ProtectedRoute>
-          } />
-          <Route path="payment-history" element={
-            <ProtectedRoute>
-              <PaymentHistory />
-            </ProtectedRoute>
-          } />
-          
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </Router>
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            {/* Public Routes */}
+            <Route index element={<ProductFeed />} />
+            <Route path="product/:id" element={<ProductDetail />} />
+            <Route path="login" element={<Login />} />
+            <Route path="signup" element={<Signup />} />
+            
+            {/* Protected Routes */}
+            <Route path="dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="add-product" element={
+              <ProtectedRoute>
+                <AddProduct />
+              </ProtectedRoute>
+            } />
+            <Route path="my-listings" element={
+              <ProtectedRoute>
+                <MyListings />
+              </ProtectedRoute>
+            } />
+            <Route path="cart" element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            } />
+            <Route path="wishlist" element={
+              <ProtectedRoute>
+                <Wishlist />
+              </ProtectedRoute>
+            } />
+            <Route path="purchases" element={
+              <ProtectedRoute>
+                <PurchaseHistory />
+              </ProtectedRoute>
+            } />
+            <Route path="payment-history" element={
+              <ProtectedRoute>
+                <PaymentHistory />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Router>
+      
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </>
   );
 }
 
